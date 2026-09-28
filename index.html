@@ -73,6 +73,49 @@ let sensorTimeout=null;
 let gx=0,gy=0,gz=0;
 let gravityReady=false;
 let filteredG=0;
+async function startMotion(){
+sensorDisplay.textContent="PRÜFE...";
+gforceDisplay.textContent="WARTEN";
+if(!window.DeviceMotionEvent){
+sensorDisplay.textContent="NICHT VERFÜGBAR";
+gforceDisplay.textContent="—";
+return false;
+}
+try{
+/*
+WICHTIG:
+requestPermission wird direkt aus dem START-Klick
+aufgerufen, bevor wir auf Kamera/GPS warten.
+*/
+if(typeof DeviceMotionEvent.requestPermission==="function"){
+const permission=await DeviceMotionEvent.requestPermission();
+if(permission!=="granted"){
+sensorDisplay.textContent="KEINE FREIGABE";
+gforceDisplay.textContent="—";
+return false;
+}
+}
+if(!motionListenerAdded){
+window.addEventListener("devicemotion",handleMotion);
+motionListenerAdded=true;
+}
+sensorDisplay.textContent="WARTEN";
+motionEvents=0;
+clearTimeout(sensorTimeout);
+sensorTimeout=setTimeout(()=>{
+if(motionEvents===0){
+sensorDisplay.textContent="KEIN SIGNAL";
+gforceDisplay.textContent="—";
+}
+},2500);
+return true;
+}catch(error){
+console.log("DeviceMotion Fehler:",error);
+sensorDisplay.textContent="FEHLER";
+gforceDisplay.textContent="—";
+return false;
+}
+}
 async function startCamera(){
 try{
 const stream=await navigator.mediaDevices.getUserMedia({
@@ -80,8 +123,10 @@ video:{facingMode:{exact:"environment"}},
 audio:false
 });
 camera.srcObject=stream;
+return true;
 }catch(error){
-console.log(error);
+console.log("Kamera Fehler:",error);
+return false;
 }
 }
 function startGPS(){
@@ -100,43 +145,12 @@ gpsDisplay.textContent="AKTIV";
 error=>{
 gpsDisplay.textContent="KEIN GPS";
 },
-{enableHighAccuracy:true,maximumAge:1000,timeout:10000}
+{
+enableHighAccuracy:true,
+maximumAge:1000,
+timeout:10000
+}
 );
-}
-async function startMotion(){
-sensorDisplay.textContent="PRÜFE...";
-gforceDisplay.textContent="WARTEN";
-if(!window.DeviceMotionEvent){
-sensorDisplay.textContent="NICHT VERFÜGBAR";
-gforceDisplay.textContent="—";
-return;
-}
-try{
-if(typeof DeviceMotionEvent.requestPermission==="function"){
-const permission=await DeviceMotionEvent.requestPermission();
-if(permission!=="granted"){
-sensorDisplay.textContent="KEINE FREIGABE";
-gforceDisplay.textContent="—";
-return;
-}
-}
-if(!motionListenerAdded){
-window.addEventListener("devicemotion",handleMotion);
-motionListenerAdded=true;
-}
-sensorDisplay.textContent="WARTEN";
-clearTimeout(sensorTimeout);
-sensorTimeout=setTimeout(()=>{
-if(motionEvents===0){
-sensorDisplay.textContent="KEIN SIGNAL";
-gforceDisplay.textContent="—";
-}
-},2000);
-}catch(error){
-console.log(error);
-sensorDisplay.textContent="FEHLER";
-gforceDisplay.textContent="—";
-}
 }
 function handleMotion(event){
 motionEvents++;
@@ -194,6 +208,11 @@ if(gpsWatch!==null){
 navigator.geolocation.clearWatch(gpsWatch);
 gpsWatch=null;
 }
+const stream=camera.srcObject;
+if(stream){
+stream.getTracks().forEach(track=>track.stop());
+camera.srcObject=null;
+}
 }
 startButton.addEventListener("click",async()=>{
 if(running){
@@ -205,8 +224,16 @@ startButton.textContent="STOP";
 motionEvents=0;
 gravityReady=false;
 filteredG=0;
-await startCamera();
+/*
+SENSOR ZUERST:
+Die Berechtigungsabfrage muss möglichst direkt
+aus dem START-Klick heraus erfolgen.
+*/
 await startMotion();
+/*
+Danach erst Kamera und GPS.
+*/
+await startCamera();
 startGPS();
 startTimer();
 });
