@@ -6,123 +6,54 @@
 <title>RACE</title>
 <style>
 *{box-sizing:border-box}
-html,body{
-margin:0;
-padding:0;
-width:100%;
-height:100%;
-background:#000;
-color:#fff;
-font-family:Arial,sans-serif;
-overflow:hidden;
+body{margin:0;background:#050505;color:white;font-family:Arial,sans-serif;overflow:hidden}
+#app{height:100vh;display:flex;flex-direction:column}
+header{height:60px;display:flex;justify-content:space-between;align-items:center;padding:0 18px;font-weight:9
+#race{font-size:28px;color:#ff2020}
+#speed{font-size:26px}
+#cameraWrap{position:relative;flex:1;overflow:hidden;background:#111}
+#camera{width:100%;height:100%;object-fit:cover}
+#overlay{
+position:absolute;left:12px;right:12px;bottom:12px;
+background:rgba(0,0,0,.72);border-radius:14px;padding:14px;
+display:grid;grid-template-columns:1fr 1fr;gap:10px
 }
-#camera{
-position:fixed;
-inset:0;
-width:100%;
-height:100%;
-object-fit:cover;
-z-index:1;
-}
-.overlay{
-position:fixed;
-inset:0;
-z-index:2;
-display:flex;
-flex-direction:column;
-justify-content:space-between;
-padding:25px 20px;
-background:linear-gradient(
-to bottom,
-rgba(0,0,0,.55),
-transparent 35%,
-transparent 60%,
-rgba(0,0,0,.65)
-);
-}
-.top{
-display:flex;
-justify-content:space-between;
-align-items:flex-start;
-}
-.logo{
-font-size:24px;
-font-weight:bold;
-letter-spacing:4px;
-}
-.speed{
-text-align:right;
-}
-.speed-number{
-font-size:58px;
-font-weight:bold;
-line-height:.9;
-}
-.unit{
-font-size:14px;
-opacity:.7;
-margin-top:5px;
-}
-.bottom{
-display:flex;
-justify-content:space-between;
-align-items:flex-end;
-}
-.data{
-font-size:17px;
-line-height:1.7;
-text-shadow:0 1px 4px #000;
-}
-.data span{
-font-weight:bold;
-}
+.item{font-size:14px;color:#aaa}
+.value{font-size:20px;color:#fff;font-weight:800;margin-top:2px}
 #start{
-width:78px;
-height:78px;
-border-radius:50%;
-border:3px solid #fff;
-background:#e00000;
-color:#fff;
-font-weight:bold;
-font-size:14px;
-}
-#start.stop{
-background:#222;
-}
-.message{
-position:fixed;
-z-index:5;
-left:50%;
-top:50%;
-transform:translate(-50%,-50%);
-text-align:center;
-width:85%;
-font-size:18px;
-line-height:1.5;
+height:72px;margin:12px;border:0;border-radius:16px;
+background:#ff2020;color:white;font-size:25px;font-weight:900
 }
 </style>
 </head>
 <body>
+<div id="app">
+<header>
+<div id="race">RACE</div>
+<div id="speed">0 KM/H</div>
+</header>
+<div id="cameraWrap">
 <video id="camera" autoplay playsinline muted></video>
-<div class="message" id="message">
-Drücke START
+<div id="overlay">
+<div>
+<div class="item">GPS</div>
+<div class="value" id="gps">KEIN GPS</div>
 </div>
-<div class="overlay">
-<div class="top">
-<div class="logo">RACE</div>
-<div class="speed">
-<div class="speed-number" id="speed">0</div>
-<div class="unit">KM/H</div>
+<div>
+<div class="item">G-KRAFT</div>
+<div class="value" id="gforce">BEREIT</div>
+</div>
+<div>
+<div class="item">SENSOR</div>
+<div class="value" id="sensor">WARTEN</div>
+</div>
+<div>
+<div class="item">ZEIT</div>
+<div class="value" id="time">00:00</div>
 </div>
 </div>
-<div class="bottom">
-<div class="data">
-GPS: <span id="gps">WARTEN</span><br>
-G-KRAFT: <span id="gforce">0.00 G</span><br>
-ZEIT: <span id="time">00:00</span>
 </div>
 <button id="start">START</button>
-</div>
 </div>
 <script>
 const camera=document.getElementById("camera");
@@ -130,232 +61,155 @@ const startButton=document.getElementById("start");
 const speedDisplay=document.getElementById("speed");
 const gpsDisplay=document.getElementById("gps");
 const gforceDisplay=document.getElementById("gforce");
+const sensorDisplay=document.getElementById("sensor");
 const timeDisplay=document.getElementById("time");
-const message=document.getElementById("message");
 let running=false;
 let startTime=null;
 let timer=null;
 let gpsWatch=null;
-let motionActive=false;
-let lastG=0;
-/* =========================
-KAMERA
-========================= */
+let motionListenerAdded=false;
+let motionEvents=0;
+let sensorTimeout=null;
+let gx=0,gy=0,gz=0;
+let gravityReady=false;
+let filteredG=0;
 async function startCamera(){
 try{
 const stream=await navigator.mediaDevices.getUserMedia({
-video:{
-facingMode:{
-exact:"environment"
-}
-},
-});
+video:{facingMode:{exact:"environment"}},
 audio:false
+});
 camera.srcObject=stream;
 }catch(error){
-message.innerHTML=
-"Kamera konnte nicht gestartet werden.<br><br>" +
-"Bitte Kamerazugriff erlauben.";
 console.log(error);
 }
 }
-/* =========================
-G-KRAFT STARTEN
-========================= */
+function startGPS(){
+if(!navigator.geolocation){
+gpsDisplay.textContent="NICHT VERFÜGBAR";
+return;
+}
+gpsWatch=navigator.geolocation.watchPosition(
+position=>{
+const speed=position.coords.speed;
+if(speed!==null && !isNaN(speed)){
+speedDisplay.textContent=(speed*3.6).toFixed(0)+" KM/H";
+}
+gpsDisplay.textContent="AKTIV";
+},
+error=>{
+gpsDisplay.textContent="KEIN GPS";
+},
+{enableHighAccuracy:true,maximumAge:1000,timeout:10000}
+);
+}
 async function startMotion(){
+sensorDisplay.textContent="PRÜFE...";
+gforceDisplay.textContent="WARTEN";
 if(!window.DeviceMotionEvent){
-gforceDisplay.textContent="NICHT VERFÜGBAR";
+sensorDisplay.textContent="NICHT VERFÜGBAR";
+gforceDisplay.textContent="—";
 return;
 }
 try{
 if(typeof DeviceMotionEvent.requestPermission==="function"){
-const permission=
-await DeviceMotionEvent.requestPermission();
+const permission=await DeviceMotionEvent.requestPermission();
 if(permission!=="granted"){
-gforceDisplay.textContent="KEINE FREIGABE";
+sensorDisplay.textContent="KEINE FREIGABE";
+gforceDisplay.textContent="—";
 return;
 }
 }
-window.addEventListener(
-"devicemotion",
-handleMotion
-);
-motionActive=true;
+if(!motionListenerAdded){
+window.addEventListener("devicemotion",handleMotion);
+motionListenerAdded=true;
+}
+sensorDisplay.textContent="WARTEN";
+clearTimeout(sensorTimeout);
+sensorTimeout=setTimeout(()=>{
+if(motionEvents===0){
+sensorDisplay.textContent="KEIN SIGNAL";
+gforceDisplay.textContent="—";
+}
+},2000);
 }catch(error){
-gforceDisplay.textContent="FEHLER";
 console.log(error);
+sensorDisplay.textContent="FEHLER";
+gforceDisplay.textContent="—";
 }
 }
-/* =========================
-ECHTE G-KRAFT
-========================= */
-let gravityX=0;
-let gravityY=0;
-let gravityZ=0;
-let gravityInitialized=false;
 function handleMotion(event){
-/*
-Wir verwenden accelerationIncludingGravity,
-weil Safari/iPhone acceleration teilweise
-nicht liefert.
-*/
-const acceleration=
-event.accelerationIncludingGravity;
-if(
-!acceleration ||
-acceleration.x===null ||
-acceleration.y===null ||
-acceleration.z===null
-){
-gforceDisplay.textContent=
-"NICHT VERFÜGBAR";
+motionEvents++;
+if(motionEvents===1){
+sensorDisplay.textContent="AKTIV";
+}
+const a=event.accelerationIncludingGravity;
+if(!a || a.x===null || a.y===null || a.z===null){
+sensorDisplay.textContent="KEINE DATEN";
+gforceDisplay.textContent="—";
 return;
 }
-const x=acceleration.x||0;
-const y=acceleration.y||0;
-const z=acceleration.z||0;
-/*
-Beim Start wird die aktuelle
-Erdanziehung als Grundwert gespeichert.
-*/
-if(!gravityInitialized){
-gravityX=x;
-gravityY=y;
-gravityZ=z;
-gravityInitialized=true;
-gforceDisplay.textContent="0.00 G";
-return;
+const x=a.x||0;
+const y=a.y||0;
+const z=a.z||0;
+const alpha=0.85;
+if(!gravityReady){
+gx=x;
+gy=y;
+gz=z;
+gravityReady=true;
+}else{
+gx=alpha*gx+(1-alpha)*x;
+gy=alpha*gy+(1-alpha)*y;
+gz=alpha*gz+(1-alpha)*z;
 }
-/*
-Erdanziehung herausrechnen.
-*/
-const dynamicX=x-gravityX;
-const dynamicY=y-gravityY;
-const dynamicZ=z-gravityZ;
-const accelerationTotal=
-Math.sqrt(
+const dynamicX=x-gx;
+const dynamicY=y-gy;
+const dynamicZ=z-gz;
+const accelerationTotal=Math.sqrt(
 dynamicX*dynamicX+
 dynamicY*dynamicY+
 dynamicZ*dynamicZ
 );
-/*
-m/s² -> G
-*/
-const g=
-accelerationTotal/9.80665;
-/*
-Anzeige glätten.
-*/
-lastG=
-lastG*0.70+
-g*0.30;
-gforceDisplay.textContent=
-lastG.toFixed(2)+" G";
+const g=accelerationTotal/9.80665;
+filteredG=filteredG*0.70+g*0.30;
+gforceDisplay.textContent=filteredG.toFixed(2)+" G";
 }
-/* =========================
-GPS
-========================= */
-function startGPS(){
-if(!navigator.geolocation){
-gpsDisplay.textContent=
-"NICHT VERFÜGBAR";
-return;
-}
-gpsWatch=
-navigator.geolocation.watchPosition(
-function(position){
-gpsDisplay.textContent="OK";
-const gpsSpeed=
-position.coords.speed;
-if(
-gpsSpeed!==null &&
-gpsSpeed>=0
-){
-speedDisplay.textContent=
-Math.round(
-gpsSpeed*3.6
-);
-}
-},
-function(){
-gpsDisplay.textContent=
-"KEIN GPS";
-},
-{
-enableHighAccuracy:true,
-maximumAge:0,
-timeout:5000
-}
-);
-}
-/* =========================
-TIMER
-========================= */
 function startTimer(){
 startTime=Date.now();
-timer=setInterval(function(){
-const elapsed=
-Math.floor(
-(Date.now()-startTime)/1000
-);
-const minutes=
-Math.floor(elapsed/60);
-const seconds=
-elapsed%60;
+timer=setInterval(()=>{
+const elapsed=Math.floor((Date.now()-startTime)/1000);
+const minutes=Math.floor(elapsed/60);
+const seconds=elapsed%60;
 timeDisplay.textContent=
-String(minutes).padStart(2,"0")+
-":"+
+String(minutes).padStart(2,"0")+":"+
 String(seconds).padStart(2,"0");
-},1000);
+},250);
 }
-/* =========================
-START / STOP
-========================= */
-startButton.addEventListener(
-"click",
-async function(){
-if(!running){
+function stopRace(){
+running=false;
+startButton.textContent="START";
+if(timer) clearInterval(timer);
+if(gpsWatch!==null){
+navigator.geolocation.clearWatch(gpsWatch);
+gpsWatch=null;
+}
+}
+startButton.addEventListener("click",async()=>{
+if(running){
+stopRace();
+return;
+}
 running=true;
 startButton.textContent="STOP";
-startButton.classList.add("stop");
-message.style.display="none";
-/*
-Sensor-Freigabe wird direkt
-durch den START-Klick angefordert.
-*/
+motionEvents=0;
+gravityReady=false;
+filteredG=0;
 await startCamera();
 await startMotion();
 startGPS();
 startTimer();
-}else{
-running=false;
-startButton.textContent="START";
-startButton.classList.remove("stop");
-if(timer){
-clearInterval(timer);
-}
-if(gpsWatch!==null){
-navigator.geolocation.clearWatch(
-gpsWatch
-);
-}
-if(motionActive){
-window.removeEventListener(
-"devicemotion",
-handleMotion
-);
-motionActive=false;
-}
-/*
-Für den nächsten Lauf
-wird die Erdanziehung neu kalibriert.
-*/
-gravityInitialized=false;
-lastG=0;
-gforceDisplay.textContent="0.00 G";
-}
-}
-);
+});
 </script>
 </body>
 </html>
