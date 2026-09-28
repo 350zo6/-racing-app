@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RACE</title>
+<style>
+*{box-sizing:border-box}
+html,body{margin:0;padding:0;width:100%;height:100%;background:#000;color:#fff;font-family:Arial,sans-serif;overflow:hidden}
+#camera{position:fixed;inset:0;width:100%;height:100%;object-fit:cover;z-index:1}
+.overlay{position:fixed;inset:0;z-index:2;display:flex;flex-direction:column;justify-content:space-between;padding:25px 20px;background:linear-gradient(to bottom,rgba(0,0,0,.55),transparent 35%,transparent 60%,rgba(0,0,0,.65))}
+.top{display:flex;justify-content:space-between;align-items:flex-start}
+.logo{font-size:24px;font-weight:bold;letter-spacing:4px}
+.speed{text-align:right}
+.speed-number{font-size:58px;font-weight:bold;line-height:.9}
+.unit{font-size:14px;opacity:.7;margin-top:5px}
+.bottom{display:flex;justify-content:space-between;align-items:flex-end}
+.data{font-size:17px;line-height:1.7;text-shadow:0 1px 4px #000}
+.data span{font-weight:bold}
+#start{width:78px;height:78px;border-radius:50%;border:3px solid #fff;background:#e00000;color:#fff;font-weight:bold;font-size:14px}
+#start.stop{background:#222}
+.message{position:fixed;z-index:5;left:50%;top:50%;transform:translate(-50%,-50%);text-align:center;width:85%;font-size:18px;line-height:1.5}
+</style>
+</head>
+<body>
+<video id="camera" autoplay playsinline muted></video>
+<div class="message" id="message">Drücke START</div>
+<div class="overlay">
+  <div class="top">
+    <div class="logo">RACE</div>
+    <div class="speed"><div class="speed-number" id="speed">0</div><div class="unit">KM/H</div></div>
+  </div>
+  <div class="bottom">
+    <div class="data">
+      GPS: <span id="gps">WARTEN</span><br>
+      G-KRAFT: <span id="gforce">0.00 G</span><br>
+      ZEIT: <span id="time">00:00</span>
+    </div>
+    <button id="start">START</button>
+  </div>
+</div>
+<script>
+const camera=document.getElementById("camera");
+const startButton=document.getElementById("start");
+const speedDisplay=document.getElementById("speed");
+const gpsDisplay=document.getElementById("gps");
+const timeDisplay=document.getElementById("time");
+const message=document.getElementById("message");
+let running=false,startTime=null,timer=null,gpsWatch=null;
+
+async function startCamera(){
+  try{
+    const stream=await navigator.mediaDevices.getUserMedia({
+      video:{facingMode:{exact:"environment"}},audio:false
+    });
+    camera.srcObject=stream;
+    message.style.display="none";
+  }catch(error){
+    message.innerHTML="Kamera konnte nicht gestartet werden.<br><br>Bitte Kamerazugriff erlauben.";
+    console.log(error);
+  }
+}
+
+function startGPS(){
+  if(!navigator.geolocation){gpsDisplay.textContent="NICHT VERFÜGBAR";return}
+  gpsWatch=navigator.geolocation.watchPosition(
+    function(position){
+      gpsDisplay.textContent="OK";
+      const gpsSpeed=position.coords.speed;
+      if(gpsSpeed!==null&&gpsSpeed>=0) speedDisplay.textContent=Math.round(gpsSpeed*3.6);
+    },
+    function(){gpsDisplay.textContent="KEIN GPS"},
+    {enableHighAccuracy:true,maximumAge:0,timeout:5000}
+  );
+}
+
+function startTimer(){
+  startTime=Date.now();
+  timer=setInterval(function(){
+    const elapsed=Math.floor((Date.now()-startTime)/1000);
+    const minutes=Math.floor(elapsed/60),seconds=elapsed%60;
+    timeDisplay.textContent=String(minutes).padStart(2,"0")+":"+String(seconds).padStart(2,"0");
+  },1000);
+}
+
+startButton.addEventListener("click",async function(){
+  if(!running){
+    running=true;
+    startButton.textContent="STOP";
+    startButton.classList.add("stop");
+    await startCamera();
+    startGPS();
+    startTimer();
+  }else{
+    running=false;
+    startButton.textContent="START";
+    startButton.classList.remove("stop");
+    if(timer)clearInterval(timer);
+    if(gpsWatch!==null)navigator.geolocation.clearWatch(gpsWatch);
+  }
+});
+</script>
+</body>
+</html>
