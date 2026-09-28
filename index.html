@@ -3,27 +3,20 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>RACE</title>
+<title>RACE Sensor Diagnose</title>
 <style>
 *{box-sizing:border-box}
-body{margin:0;background:#050505;color:white;font-family:Arial,sans-serif;overflow:hidden}
-#app{height:100vh;display:flex;flex-direction:column}
-header{height:60px;display:flex;justify-content:space-between;align-items:center;padding:0 18px;font-weight:9
-#race{font-size:28px;color:#ff2020}
-#speed{font-size:26px}
-#cameraWrap{position:relative;flex:1;overflow:hidden;background:#111}
+body{margin:0;background:#050505;color:white;font-family:Arial,sans-serif}
+#app{min-height:100vh;display:flex;flex-direction:column}
+header{height:60px;display:flex;justify-content:space-between;align-items:center;padding:0 18px}
+#race{font-size:28px;font-weight:900;color:#ff2020}
+#speed{font-size:26px;font-weight:900}
+#cameraWrap{position:relative;height:calc(100vh - 132px);overflow:hidden;background:#111}
 #camera{width:100%;height:100%;object-fit:cover}
-#overlay{
-position:absolute;left:12px;right:12px;bottom:12px;
-background:rgba(0,0,0,.72);border-radius:14px;padding:14px;
-display:grid;grid-template-columns:1fr 1fr;gap:10px
-}
-.item{font-size:14px;color:#aaa}
-.value{font-size:20px;color:#fff;font-weight:800;margin-top:2px}
-#start{
-height:72px;margin:12px;border:0;border-radius:16px;
-background:#ff2020;color:white;font-size:25px;font-weight:900
-}
+#overlay{position:absolute;left:10px;right:10px;bottom:10px;background:rgba(0,0,0,.78);padding:12px;border-rad
+.item{font-size:14px;color:#aaa;margin-top:5px}
+.value{font-size:19px;font-weight:800;word-break:break-word}
+#start{height:72px;margin:12px;border:0;border-radius:16px;background:#ff2020;color:#fff;font-size:25px;font-w
 </style>
 </head>
 <body>
@@ -35,22 +28,16 @@ background:#ff2020;color:white;font-size:25px;font-weight:900
 <div id="cameraWrap">
 <video id="camera" autoplay playsinline muted></video>
 <div id="overlay">
-<div>
 <div class="item">GPS</div>
 <div class="value" id="gps">KEIN GPS</div>
-</div>
-<div>
 <div class="item">G-KRAFT</div>
-<div class="value" id="gforce">BEREIT</div>
-</div>
-<div>
+<div class="value" id="gforce">—</div>
 <div class="item">SENSOR</div>
 <div class="value" id="sensor">WARTEN</div>
-</div>
-<div>
+<div class="item">FEHLERDETAIL</div>
+<div class="value" id="errorDetail">—</div>
 <div class="item">ZEIT</div>
 <div class="value" id="time">00:00</div>
-</div>
 </div>
 </div>
 <button id="start">START</button>
@@ -62,6 +49,7 @@ const speedDisplay=document.getElementById("speed");
 const gpsDisplay=document.getElementById("gps");
 const gforceDisplay=document.getElementById("gforce");
 const sensorDisplay=document.getElementById("sensor");
+const errorDetail=document.getElementById("errorDetail");
 const timeDisplay=document.getElementById("time");
 let running=false;
 let startTime=null;
@@ -69,52 +57,59 @@ let timer=null;
 let gpsWatch=null;
 let motionListenerAdded=false;
 let motionEvents=0;
-let sensorTimeout=null;
-let gx=0,gy=0,gz=0;
-let gravityReady=false;
-let filteredG=0;
 async function startMotion(){
 sensorDisplay.textContent="PRÜFE...";
-gforceDisplay.textContent="WARTEN";
+errorDetail.textContent="";
 if(!window.DeviceMotionEvent){
 sensorDisplay.textContent="NICHT VERFÜGBAR";
-gforceDisplay.textContent="—";
-return false;
+errorDetail.textContent="DeviceMotionEvent fehlt";
+return;
 }
 try{
-/*
-WICHTIG:
-requestPermission wird direkt aus dem START-Klick
-aufgerufen, bevor wir auf Kamera/GPS warten.
-*/
 if(typeof DeviceMotionEvent.requestPermission==="function"){
+errorDetail.textContent="requestPermission gefunden";
 const permission=await DeviceMotionEvent.requestPermission();
 if(permission!=="granted"){
 sensorDisplay.textContent="KEINE FREIGABE";
-gforceDisplay.textContent="—";
-return false;
+errorDetail.textContent="Antwort: "+permission;
+return;
 }
+}else{
+errorDetail.textContent="Keine requestPermission-Funktion";
 }
 if(!motionListenerAdded){
 window.addEventListener("devicemotion",handleMotion);
 motionListenerAdded=true;
 }
 sensorDisplay.textContent="WARTEN";
-motionEvents=0;
-clearTimeout(sensorTimeout);
-sensorTimeout=setTimeout(()=>{
+errorDetail.textContent="Berechtigung OK – warte auf Signal";
+setTimeout(()=>{
 if(motionEvents===0){
 sensorDisplay.textContent="KEIN SIGNAL";
-gforceDisplay.textContent="—";
+errorDetail.textContent="Keine devicemotion Events";
 }
 },2500);
-return true;
 }catch(error){
-console.log("DeviceMotion Fehler:",error);
 sensorDisplay.textContent="FEHLER";
-gforceDisplay.textContent="—";
-return false;
+errorDetail.textContent=
+(error.name||"Unbekannter Fehler")+" – "+(error.message||String(error));
+console.log(error);
 }
+}
+function handleMotion(event){
+motionEvents++;
+sensorDisplay.textContent="AKTIV";
+errorDetail.textContent="Event #"+motionEvents;
+const a=event.accelerationIncludingGravity;
+if(!a || a.x===null || a.y===null || a.z===null){
+gforceDisplay.textContent="KEINE DATEN";
+errorDetail.textContent="Sensor Event da, aber Werte fehlen";
+return;
+}
+const x=a.x||0,y=a.y||0,z=a.z||0;
+const total=Math.sqrt(x*x+y*y+z*z);
+const g=Math.abs(total/9.80665-1);
+gforceDisplay.textContent=g.toFixed(2)+" G";
 }
 async function startCamera(){
 try{
@@ -123,96 +118,43 @@ video:{facingMode:{exact:"environment"}},
 audio:false
 });
 camera.srcObject=stream;
-return true;
 }catch(error){
-console.log("Kamera Fehler:",error);
-return false;
+console.log(error);
 }
 }
 function startGPS(){
-if(!navigator.geolocation){
-gpsDisplay.textContent="NICHT VERFÜGBAR";
-return;
-}
+if(!navigator.geolocation)return;
 gpsWatch=navigator.geolocation.watchPosition(
 position=>{
-const speed=position.coords.speed;
-if(speed!==null && !isNaN(speed)){
-speedDisplay.textContent=(speed*3.6).toFixed(0)+" KM/H";
+if(position.coords.speed!==null){
+speedDisplay.textContent=(position.coords.speed*3.6).toFixed(0)+" KM/H";
 }
 gpsDisplay.textContent="AKTIV";
 },
-error=>{
-gpsDisplay.textContent="KEIN GPS";
-},
-{
-enableHighAccuracy:true,
-maximumAge:1000,
-timeout:10000
-}
+()=>{gpsDisplay.textContent="KEIN GPS";},
+{enableHighAccuracy:true,maximumAge:1000,timeout:10000}
 );
-}
-function handleMotion(event){
-motionEvents++;
-if(motionEvents===1){
-sensorDisplay.textContent="AKTIV";
-}
-const a=event.accelerationIncludingGravity;
-if(!a || a.x===null || a.y===null || a.z===null){
-sensorDisplay.textContent="KEINE DATEN";
-gforceDisplay.textContent="—";
-return;
-}
-const x=a.x||0;
-const y=a.y||0;
-const z=a.z||0;
-const alpha=0.85;
-if(!gravityReady){
-gx=x;
-gy=y;
-gz=z;
-gravityReady=true;
-}else{
-gx=alpha*gx+(1-alpha)*x;
-gy=alpha*gy+(1-alpha)*y;
-gz=alpha*gz+(1-alpha)*z;
-}
-const dynamicX=x-gx;
-const dynamicY=y-gy;
-const dynamicZ=z-gz;
-const accelerationTotal=Math.sqrt(
-dynamicX*dynamicX+
-dynamicY*dynamicY+
-dynamicZ*dynamicZ
-);
-const g=accelerationTotal/9.80665;
-filteredG=filteredG*0.70+g*0.30;
-gforceDisplay.textContent=filteredG.toFixed(2)+" G";
 }
 function startTimer(){
 startTime=Date.now();
 timer=setInterval(()=>{
-const elapsed=Math.floor((Date.now()-startTime)/1000);
-const minutes=Math.floor(elapsed/60);
-const seconds=elapsed%60;
+const e=Math.floor((Date.now()-startTime)/1000);
 timeDisplay.textContent=
-String(minutes).padStart(2,"0")+":"+
-String(seconds).padStart(2,"0");
+String(Math.floor(e/60)).padStart(2,"0")+":"+
+String(e%60).padStart(2,"0");
 },250);
 }
 function stopRace(){
 running=false;
 startButton.textContent="START";
-if(timer) clearInterval(timer);
+if(timer)clearInterval(timer);
 if(gpsWatch!==null){
 navigator.geolocation.clearWatch(gpsWatch);
 gpsWatch=null;
 }
 const stream=camera.srcObject;
-if(stream){
-stream.getTracks().forEach(track=>track.stop());
+if(stream)stream.getTracks().forEach(track=>track.stop());
 camera.srcObject=null;
-}
 }
 startButton.addEventListener("click",async()=>{
 if(running){
@@ -222,17 +164,8 @@ return;
 running=true;
 startButton.textContent="STOP";
 motionEvents=0;
-gravityReady=false;
-filteredG=0;
-/*
-SENSOR ZUERST:
-Die Berechtigungsabfrage muss möglichst direkt
-aus dem START-Klick heraus erfolgen.
-*/
+/* Motion direkt aus dem START-Tap */
 await startMotion();
-/*
-Danach erst Kamera und GPS.
-*/
 await startCamera();
 startGPS();
 startTimer();
