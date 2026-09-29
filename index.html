@@ -21,12 +21,12 @@ body{touch-action:manipulation}
 background:linear-gradient(180deg,rgba(0,0,0,.62) 0%,rgba(0,0,0,.03) 34%,rgba(0,0,0,.12) 58%,rgba(0,0,0,.88) 100%)}
 #placeholder{position:absolute;inset:0;z-index:2;display:flex;align-items:center;justify-content:center;
 color:#333;font-size:12px;letter-spacing:2px;pointer-events:none}
-#top{position:absolute;top:calc(12px + var(--safe-top));left:0;right:0;z-index:5;
-display:flex;justify-content:space-between;align-items:flex-start;padding:0 18px}
-.brand{font-weight:900;letter-spacing:-1.4px;font-size:25px;text-shadow:0 2px 14px #000}
-.brand .slash{color:var(--red)}
+#top{position:fixed;top:calc(10px + var(--safe-top));left:0;right:0;z-index:50;
+display:flex;justify-content:space-between;align-items:flex-start;padding:0 18px;pointer-events:none;background:linear-gradient(180deg,rgba(0,0,0,.28),rgba(0,0,0,0));min-heigh
+.brand{position:relative;z-index:51;color:#fff!important;font-weight:900;letter-spacing:-1.4px;font-size:25px;text-shadow:0 2px 14px #000}
+.brand .slash{color:var(--red)!important}.brand,.brand *,.speed,.speed *{opacity:1!important;visibility:visible!important}
 .sub{font-size:9px;letter-spacing:2.8px;color:#bbb;margin-top:4px;font-weight:700}
-.speed{text-align:right;text-shadow:0 3px 14px #000}
+.speed{position:relative;z-index:51;color:#fff!important;text-align:right;text-shadow:0 3px 14px #000}
 .speedNum{font-size:47px;font-weight:850;line-height:.9;letter-spacing:-2px}
 .speedUnit{font-size:10px;letter-spacing:2px;font-weight:800;color:#ddd;margin-top:5px}
 #rec{display:none;position:absolute;left:18px;top:calc(70px + var(--safe-top));z-index:6;
