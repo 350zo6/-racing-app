@@ -162,11 +162,23 @@ right:22px;
 top:calc(112px + var(--safe-top));
 bottom:auto;
 width:min(300px,31vw);
-grid-template-columns:1fr;
-gap:8px;
+grid-template-columns:1fr 1fr;
+gap:7px;
 }
-.card{padding:10px 12px}
-.value{font-size:16px}
+.card{
+min-height:62px;
+padding:7px 9px;
+border-radius:11px;
+}
+.label{
+font-size:7px;
+letter-spacing:1.7px;
+}
+.value{
+margin-top:3px;
+font-size:13px;
+letter-spacing:-.2px;
+}
 #controls{
 left:22px;right:auto;
 bottom:calc(18px + var(--safe-bottom));
