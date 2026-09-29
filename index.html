@@ -23,11 +23,11 @@ background:linear-gradient(180deg,rgba(0,0,0,.62) 0%,rgba(0,0,0,.03) 34%,rgba(0,
 color:#333;font-size:12px;letter-spacing:2px;pointer-events:none}
 #top{position:fixed;top:calc(10px + var(--safe-top));left:0;right:0;z-index:50;
 display:flex;justify-content:space-between;align-items:flex-start;padding:0 18px;pointer-events:none;background:linear-gradient(180deg,rgba(0,0,0,.28),rgba(0,0,0,0));min-heigh
-.brand{position:relative;z-index:51;color:#fff!important;font-weight:900;letter-spacing:-1.4px;font-size:25px;text-shadow:0 2px 14px #000}
+.brand{position:relative;z-index:51;color:#fff!important;font-weight:950;letter-spacing:-1.4px;font-size:25px;text-shadow:0 2px 14px #000}
 .brand .slash{color:var(--red)!important}.brand,.brand *,.speed,.speed *{opacity:1!important;visibility:visible!important}
 .sub{font-size:9px;letter-spacing:2.8px;color:#bbb;margin-top:4px;font-weight:700}
 .speed{position:relative;z-index:51;color:#fff!important;text-align:right;text-shadow:0 3px 14px #000}
-.speedNum{font-size:47px;font-weight:850;line-height:.9;letter-spacing:-2px}
+.speedNum{font-size:50px;font-weight:850;line-height:.9;letter-spacing:-2px}
 .speedUnit{font-size:10px;letter-spacing:2px;font-weight:800;color:#ddd;margin-top:5px}
 #rec{display:none;position:absolute;left:18px;top:calc(70px + var(--safe-top));z-index:6;
 align-items:center;gap:7px;padding:7px 10px;border-radius:999px;background:rgba(0,0,0,.5);
@@ -67,13 +67,28 @@ border:0;border-bottom:1px solid rgba(255,255,255,.08);color:#fff;font-size:15px
 .speedNum{font-size:44px}
 }
 @media (orientation:landscape){
-#top{padding:0 22px}.speedNum{font-size:42px}
-#menuBtn{top:calc(14px + var(--safe-top));right:22px}
-#rec{left:22px;top:calc(62px + var(--safe-top))}
-#hud{left:auto;right:18px;bottom:calc(82px + var(--safe-bottom));width:245px;grid-template-columns:1fr 1fr}
-#controls{left:20px;right:auto;bottom:calc(18px + var(--safe-bottom));justify-content:flex-start}
-#start{width:235px;height:52px}
-#status{left:20px;transform:none;bottom:calc(77px + var(--safe-bottom))}
+#top{padding:0 24px;min-height:86px}
+.brand{font-size:23px}
+.sub{font-size:8px;letter-spacing:2.5px}
+.speedNum{font-size:44px}
+.speedUnit{font-size:9px}
+#menuBtn{top:calc(14px + var(--safe-top));right:24px}
+#rec{left:24px;top:calc(68px + var(--safe-top))}
+#hud{
+left:auto;right:22px;bottom:calc(82px + var(--safe-bottom));
+width:min(360px,38vw);grid-template-columns:1fr 1fr;gap:9px
+}
+.card{padding:10px 11px}
+.value{font-size:16px}
+#controls{
+left:22px;right:auto;bottom:calc(18px + var(--safe-bottom));
+justify-content:flex-start
+}
+#start{width:min(330px,42vw);height:54px}
+#status{
+left:22px;transform:none;bottom:calc(79px + var(--safe-bottom));
+text-align:left
+}
 }
 </style>
 </head>
