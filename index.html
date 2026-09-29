@@ -16,13 +16,13 @@ html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#050505;col
 font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display","Helvetica Neue",Arial,sans-serif}
 body{touch-action:manipulation}
 #app{position:fixed;inset:0;background:#050505}
-#camera{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;background:#111;z-index:0}
+#camera{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;background:#111;z-index:0;display:block}
 #shade{position:absolute;inset:0;z-index:1;pointer-events:none;
 background:linear-gradient(180deg,rgba(0,0,0,.58) 0%,rgba(0,0,0,.04) 34%,rgba(0,0,0,.15) 58%,rgba(0,0,0,.84) 100%)}
 #top{position:absolute;top:calc(12px + var(--safe-top));left:0;right:0;z-index:5;
 display:flex;align-items:flex-start;justify-content:space-between;padding:0 18px}
 .brand{display:flex;align-items:center;gap:9px;text-shadow:0 2px 12px #000}
-.brandMark{font-size:24px;font-weight:900;letter-spacing:-1.8px}
+.brandMark{font-size:23px;font-weight:900;letter-spacing:-1.5px}.brandMark b{font-weight:950}.brandMark span{color:var(--red);font-weight:900;margin:0 3px}
 .brandMark span{color:var(--red)}
 .brandSub{font-size:10px;letter-spacing:2.5px;font-weight:700;color:#ddd;margin-top:2px}
 .speed{text-align:right;line-height:.85;text-shadow:0 3px 16px #000}
@@ -62,7 +62,7 @@ background:none;border:0;border-bottom:1px solid rgba(255,255,255,.08);color:#ff
 .menuItem small{color:#777;font-size:18px}
 #permissionNote{display:none;position:absolute;inset:0;z-index:30;align-items:center;justify-content:center;padding:25px;background:#050505}
 .note{max-width:430px;border:1px solid var(--line);background:#101012;border-radius:20px;padding:26px;text-align:center}
-.note h2{margin:0 0 10px;font-size:24px}.note p{color:#aaa;line-height:1.5;font-size:14px}.note button{margin-top:10px;width:100%;height:50px;border:0;border-r
+.note h2{margin:0 0 10px;font-size:24px}.note p{color:#aaa;line-height:1.5;font-size:14px}.note button{margin-top:10px;width:100%;height:50px;border:0;border-radius:14px;b
 @media (orientation:landscape){
 #top{padding:0 22px}
 .speedNum{font-size:42px}
@@ -85,13 +85,14 @@ background:none;border:0;border-bottom:1px solid rgba(255,255,255,.08);color:#ff
 <div id="app">
 <video id="camera" autoplay playsinline muted></video>
 <div id="shade"></div>
+<div id="cameraHint" style="position:absolute;inset:0;z-index:2;display:flex;align-items:center;justify-content:center;color:#666;font-size:10px;letter-spacing:2px;poin
 <div id="top">
 <div class="brand">
 <div>
 </div>
 </div>
 </div>
-<div class="brandMark">DM<span>•</span>MOTION</div>
+<div class="brandMark"><b>DM</b><span>//</span>MOTION</div>
 <div class="brandSub">DRIVE TELEMETRY</div>
 <div class="speed"><div class="speedNum" id="speed">0</div><div class="speedUnit">KM/H</div></div>
 <button id="menuBtn" aria-label="Menü">■</button>
@@ -120,7 +121,7 @@ background:none;border:0;border-bottom:1px solid rgba(255,255,255,.08);color:#ff
 </div>
 </div>
 <script>
-const video=document.getElementById('camera'), startBtn=document.getElementById('startBtn');
+const video=document.getElementById('camera'), cameraHint=document.getElementById('cameraHint'), startBtn=document.getElementById('startBtn');
 const speedEl=document.getElementById('speed'), gpsEl=document.getElementById('gps');
 const gEl=document.getElementById('g'), sensorEl=document.getElementById('sensor');
 const timeEl=document.getElementById('time'), recEl=document.getElementById('rec'), statusEl=document.getElementById('status');
@@ -129,7 +130,7 @@ let stream=null, watchId=null, timer=null, running=false, startTime=0;
 let gravity={x:0,y:0,z:0}, gSmooth=0, motionOK=false;
 function setStatus(t){statusEl.textContent=t}
 function fmtTime(ms){let s=ms/1000;let m=Math.floor(s/60);let sec=(s%60).toFixed(1).padStart(4,'0');return String(m).padStart(2,'0')+':'+sec}
-function resetValues(){speedEl.textContent='0';gpsEl.textContent='WAITING';gEl.textContent='0.00 G';sensorEl.textContent='BEREIT';timeEl.textContent='00:00.0';
+function resetValues(){speedEl.textContent='0';gpsEl.textContent='WAITING';gEl.textContent='0.00 G';sensorEl.textContent='BEREIT';timeEl.textContent='00:00.0';gravity={x:
 function motionHandler(e){
 const a=e.accelerationIncludingGravity;
 if(!a || a.x==null) return;
@@ -154,12 +155,31 @@ motionOK=true;sensorEl.textContent='AKTIV';return true;
 }catch(e){sensorEl.textContent='FEHLER';return false}
 }
 async function startCamera(){
+if(!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia){
+setStatus('KAMERA NICHT VERFÜGBAR'); return false;
+}
 try{
-stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:{exact:'environment'}},audio:false});
-video.srcObject=stream;
+// iPhone Safari: use a flexible rear-camera request instead of "exact".
+const s=await navigator.mediaDevices.getUserMedia({
+video:{facingMode:'environment',width:{ideal:1920},height:{ideal:1080}},
+audio:false
+});
+stream=s;
+video.srcObject=s;
+video.muted=true;
+video.playsInline=true;
+cameraHint.style.display='none';
+await video.play().catch(()=>{});
+return true;
 }catch(e){
-try{stream=await navigator.mediaDevices.getUserMedia({video:true,audio:false});video.srcObject=stream}
-catch(err){setStatus('KAMERA NICHT VERFÜGBAR')}
+console.log('Camera error:',e);
+try{
+const s=await navigator.mediaDevices.getUserMedia({video:true,audio:false});
+stream=s; video.srcObject=s; await video.play().catch(()=>{}); return true;
+}catch(err){
+console.log('Fallback camera error:',err);
+setStatus('KAMERA-BERECHTIGUNG PRÜFEN'); return false;
+}
 }
 }
 function startGPS(){
@@ -172,20 +192,24 @@ gpsEl.textContent=pos.coords.accuracy?Math.round(pos.coords.accuracy)+' M':'AKTI
 }
 async function startDrive(){
 if(running)return;
+// Keep the first user tap as the permission gesture on iPhone Safari.
 setStatus('STARTING…');
 await requestMotion();
-await startCamera();
-startGPS();
-running=true;startTime=performance.now();
+running=true;
+startTime=performance.now();
 timer=setInterval(()=>timeEl.textContent=fmtTime(performance.now()-startTime),100);
-recEl.style.display='flex';startBtn.textContent='STOP DRIVE';startBtn.classList.add('stop');
-setStatus('DM MOTION • RECORDING');
+recEl.style.display='flex';
+startBtn.textContent='STOP DRIVE';
+startBtn.classList.add('stop');
+startGPS();
+const camOK=await startCamera();
+if(camOK) setStatus('DM MOTION • RECORDING');
 }
 function stopDrive(){
 running=false;
 if(timer)clearInterval(timer);timer=null;
 if(watchId!==null)navigator.geolocation.clearWatch(watchId);watchId=null;
-if(stream){stream.getTracks().forEach(t=>t.stop());stream=null} video.srcObject=null;
+if(stream){stream.getTracks().forEach(t=>t.stop());stream=null} video.srcObject=null; cameraHint.style.display='flex';
 recEl.style.display='none';startBtn.textContent='START DRIVE';startBtn.classList.remove('stop');
 resetValues();setStatus('DM MOTION • READY');
 }
