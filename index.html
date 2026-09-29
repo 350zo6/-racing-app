@@ -2,285 +2,139 @@
 <html lang="de">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#050505">
 <title>RACE</title>
 <style>
-*{box-sizing:border-box}
-body{margin:0;background:#050505;color:white;font-family:Arial,sans-serif;overflow:hidden}
-#app{height:100vh;display:flex;flex-direction:column}
-header{height:60px;display:flex;justify-content:space-between;align-items:center;padding:0 18px}
-#race{font-size:28px;font-weight:900;color:#ff2020}
-#speed{font-size:26px;font-weight:900}
-#cameraWrap{position:relative;flex:1;overflow:hidden;background:#111}
-#camera{width:100%;height:100%;object-fit:cover}
-#overlay{
-position:absolute;left:10px;right:10px;bottom:10px;
-background:rgba(0,0,0,.76);border-radius:14px;padding:12px;
-display:grid;grid-template-columns:1fr 1fr;gap:10px
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;width:100%;height:100%;background:#050505;color:#fff;font-family:-apple-system,BlinkMacSyst
+body{padding-top:env(safe-area-inset-top);padding-bottom:env(safe-area-inset-bottom)}
+button{font:inherit}
+#app{width:100%;height:100%;min-height:0;display:flex;flex-direction:column;background:#050505}
+header{height:64px;min-height:64px;display:flex;align-items:center;justify-content:space-between;padding:0 18p
+.logo{display:flex;align-items:center;gap:8px;font-size:25px;font-weight:900;letter-spacing:-1px}
+.logoMark{width:7px;height:24px;background:#ff2b2b;transform:skewX(-18deg);box-shadow:9px 0 #ff2b2b,18px 0 #ff
+.speedTop{text-align:right;line-height:1}
+.speedNumber{font-size:27px;font-weight:900;letter-spacing:-1px}
+.speedUnit{font-size:10px;color:#8e8e8e;font-weight:700;letter-spacing:1.5px;margin-top:4px}
+#cameraArea{position:relative;flex:1;min-height:0;overflow:hidden;background:#0c0c0c}
+#camera{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;background:#0c0c0c}
+.cameraPlaceholder{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;flex-direc
+.placeholderLogo{font-size:54px;font-weight:900;letter-spacing:-3px;color:#191919}
+.placeholderText{margin-top:6px;font-size:11px;letter-spacing:2px;color:#292929}
+#recordBadge{position:absolute;top:14px;left:14px;display:none;align-items:center;gap:8px;padding:8px 11px;bor
+#recordDot{width:8px;height:8px;border-radius:50%;background:#ff2b2b;box-shadow:0 0 10px rgba(255,43,43,.8)}
+#recordBadge.active{display:flex}
+#telemetry{position:absolute;left:12px;right:12px;bottom:12px;display:grid;grid-template-columns:repeat(2,1fr)
+.card{min-width:0;background:rgba(5,5,5,.80);border:1px solid rgba(255,255,255,.09);border-radius:13px;padding
+.cardLabel{color:#858585;font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase}
+.cardValue{margin-top:3px;font-size:20px;font-weight:900;letter-spacing:-.4px;white-space:nowrap;overflow:hidd
+#gforceCard{border-left:3px solid #4bd34b}
+#sensorCard{border-left:3px solid #4bd34b}
+#controls{padding:10px 12px calc(10px + env(safe-area-inset-bottom));background:#050505;border-top:1px solid #
+#start{width:100%;height:58px;border:0;border-radius:16px;background:#ff2b2b;color:#fff;font-size:21px;font-we
+#start:active{transform:scale(.985)}
+#start.stop{background:#171717;border:1px solid #ff2b2b;color:#ff5a5a}
+@media (orientation:landscape){
+header{height:54px;min-height:54px;padding:0 16px}
+.logo{font-size:21px}.logoMark{height:20px}.speedNumber{font-size:23px}
+#telemetry{left:auto;right:12px;bottom:12px;width:210px;grid-template-columns:1fr}
+.card{padding:8px 10px}.cardValue{font-size:17px}
+#controls{position:absolute;left:12px;bottom:12px;width:220px;padding:0;border:0;background:transparent}
+#start{height:52px}
+#cameraArea{position:absolute;top:54px;left:0;right:0;bottom:0}
+header{position:absolute;top:0;left:0;right:0;background:rgba(5,5,5,.82);backdrop-filter:blur(8px)}
 }
-.item{font-size:13px;color:#aaa}
-.value{font-size:19px;color:#fff;font-weight:800;margin-top:2px}
-#start{
-height:72px;margin:12px;border:0;border-radius:16px;
-background:#ff2020;color:white;font-size:25px;font-weight:900
+@media (orientation:landscape) and (max-height:430px){
+.card:nth-child(3),.card:nth-child(4){display:none}
+#telemetry{width:185px}#controls{width:195px}
 }
 </style>
 </head>
 <body>
 <div id="app">
 <header>
-<div id="race">RACE</div>
-<div id="speed">0 KM/H</div>
+<div class="logo"><span class="logoMark"></span><span>RACE</span></div>
+<div class="speedTop"><div class="speedNumber" id="speed">0</div><div class="speedUnit">KM/H</div></div>
 </header>
-<div id="cameraWrap">
+<main id="cameraArea">
 <video id="camera" autoplay playsinline muted></video>
-<div id="overlay">
-<div>
-<div class="item">GPS</div>
-<div class="value" id="gps">KEIN GPS</div>
+<div class="cameraPlaceholder" id="placeholder"><div class="placeholderLogo">RACE</div><div class="placeholder
+<div id="recordBadge"><span id="recordDot"></span><span>REC</span><span id="recordTime">00:00</span></div>
+<div id="telemetry">
+<div class="card"><div class="cardLabel">GPS</div><div class="cardValue" id="gps">KEIN GPS</div></div>
+<div class="card" id="gforceCard"><div class="cardLabel">G-KRAFT</div><div class="cardValue" id="gforce">0.00
+<div class="card" id="sensorCard"><div class="cardLabel">SENSOR</div><div class="cardValue" id="sensor">BEREIT
+<div class="card"><div class="cardLabel">ZEIT</div><div class="cardValue" id="time">00:00</div></div>
 </div>
-<div>
-<div class="item">G-KRAFT</div>
-<div class="value" id="gforce">0.00 G</div>
-</div>
-<div>
-<div class="item">SENSOR</div>
-<div class="value" id="sensor">BEREIT</div>
-</div>
-<div>
-<div class="item">ZEIT</div>
-<div class="value" id="time">00:00</div>
-</div>
-</div>
-</div>
-<button id="start">START</button>
+</main>
+<div id="controls"><button id="start">START</button></div>
 </div>
 <script>
-const camera=document.getElementById("camera");
-const startButton=document.getElementById("start");
-const speedDisplay=document.getElementById("speed");
-const gpsDisplay=document.getElementById("gps");
-const gforceDisplay=document.getElementById("gforce");
-const sensorDisplay=document.getElementById("sensor");
-const timeDisplay=document.getElementById("time");
-let running=false;
-let startTime=null;
-let timer=null;
-let gpsWatch=null;
-let motionListenerAdded=false;
-let motionEvents=0;
-let gravityX=0;
-let gravityY=0;
-let gravityZ=0;
-let gravityReady=false;
-let filteredG=0;
-let peakG=0;
-/*
-G-KRAFT BERECHNUNG
-Das Telefon misst:
-- Beschleunigung
-- Schwerkraft
-Wir schätzen die Schwerkraft mit einem
-langsamen Filter und ziehen sie ab.
-Dadurch bleibt die dynamische Bewegung übrig.
-*/
-function handleMotion(event){
-motionEvents++;
-if(motionEvents===1){
-sensorDisplay.textContent="AKTIV";
-}
-const a=event.accelerationIncludingGravity;
-if(!a || a.x===null || a.y===null || a.z===null){
-sensorDisplay.textContent="KEINE DATEN";
-return;
-}
-const x=Number(a.x)||0;
-const y=Number(a.y)||0;
-const z=Number(a.z)||0;
-/*
-Gravity-Filter.
-Hoher alpha-Wert = langsame Anpassung.
-*/
-const alpha=0.92;
-if(!gravityReady){
-gravityX=x;
-gravityY=y;
-gravityZ=z;
-gravityReady=true;
-filteredG=0;
-gforceDisplay.textContent="0.00 G";
-return;
-}
-gravityX=alpha*gravityX+(1-alpha)*x;
-gravityY=alpha*gravityY+(1-alpha)*y;
-gravityZ=alpha*gravityZ+(1-alpha)*z;
-const dynamicX=x-gravityX;
-const dynamicY=y-gravityY;
-const dynamicZ=z-gravityZ;
-const acceleration=Math.sqrt(
-dynamicX*dynamicX+
-dynamicY*dynamicY+
-dynamicZ*dynamicZ
-);
-const rawG=acceleration/9.80665;
-/*
-Glättung gegen nervöses Springen.
-*/
-filteredG=filteredG*0.75+rawG*0.25;
-if(filteredG>peakG){
-peakG=filteredG;
-}
-gforceDisplay.textContent=filteredG.toFixed(2)+" G";
-}
+const camera=document.getElementById("camera"),placeholder=document.getElementById("placeholder"),startButton=
+let running=false,startTime=null,timer=null,gpsWatch=null,motionListenerAdded=false,motionEvents=0,gravityX=0,
 async function startMotion(){
 sensorDisplay.textContent="PRÜFE...";
-if(!window.DeviceMotionEvent){
-sensorDisplay.textContent="NICHT VERFÜGBAR";
-return false;
-}
+if(!window.DeviceMotionEvent){sensorDisplay.textContent="NICHT VERFÜGBAR";return false}
 try{
-/*
-Wichtig:
-Berechtigung direkt aus dem START-Tap.
-*/
 if(typeof DeviceMotionEvent.requestPermission==="function"){
-const permission=
-await DeviceMotionEvent.requestPermission();
-if(permission!=="granted"){
-sensorDisplay.textContent="KEINE FREIGABE";
-return false;
+const permission=await DeviceMotionEvent.requestPermission();
+if(permission!=="granted"){sensorDisplay.textContent="KEINE FREIGABE";return false}
 }
+if(!motionListenerAdded){window.addEventListener("devicemotion",handleMotion);motionListenerAdded=true}
+sensorDisplay.textContent="WARTEN";motionEvents=0;
+setTimeout(()=>{if(motionEvents===0)sensorDisplay.textContent="KEIN SIGNAL"},2500);
+return true
+}catch(error){console.log(error);sensorDisplay.textContent="FEHLER";return false}
 }
-if(!motionListenerAdded){
-window.addEventListener(
-"devicemotion",
-handleMotion
-);
-motionListenerAdded=true;
-}
-sensorDisplay.textContent="WARTEN";
-setTimeout(()=>{
-if(motionEvents===0){
-sensorDisplay.textContent="KEIN SIGNAL";
-}
-},2500);
-return true;
-}catch(error){
-console.log(error);
-sensorDisplay.textContent="FEHLER";
-return false;
-}
+function handleMotion(event){
+motionEvents++;if(motionEvents===1)sensorDisplay.textContent="AKTIV";
+const a=event.accelerationIncludingGravity;
+if(!a||a.x===null||a.y===null||a.z===null){sensorDisplay.textContent="KEINE DATEN";return}
+const x=Number(a.x)||0,y=Number(a.y)||0,z=Number(a.z)||0,alpha=.92;
+if(!gravityReady){gravityX=x;gravityY=y;gravityZ=z;gravityReady=true;filteredG=0;gforceDisplay.textContent="0.
+gravityX=alpha*gravityX+(1-alpha)*x;gravityY=alpha*gravityY+(1-alpha)*y;gravityZ=alpha*gravityZ+(1-alpha)*z;
+const dx=x-gravityX,dy=y-gravityY,dz=z-gravityZ;
+const acceleration=Math.sqrt(dx*dx+dy*dy+dz*dz),rawG=acceleration/9.80665;
+filteredG=filteredG*.75+rawG*.25;gforceDisplay.textContent=filteredG.toFixed(2)+" G";
 }
 async function startCamera(){
 try{
-const stream=
-await navigator.mediaDevices.getUserMedia({
-video:{
-facingMode:{
-exact:"environment"
-}
-},
-audio:false
-});
-camera.srcObject=stream;
-}catch(error){
-console.log(error);
-}
+const stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:{exact:"environment"}},audio:false})
+camera.srcObject=stream;placeholder.style.display="none";return true
+}catch(error){console.log(error);return false}
 }
 function startGPS(){
-if(!navigator.geolocation){
-gpsDisplay.textContent="NICHT VERFÜGBAR";
-return;
-}
-gpsWatch=
-navigator.geolocation.watchPosition(
-position=>{
+if(!navigator.geolocation){gpsDisplay.textContent="NICHT VERFÜGBAR";return}
+gpsWatch=navigator.geolocation.watchPosition(position=>{
 const speed=position.coords.speed;
-if(speed!==null && !isNaN(speed)){
-speedDisplay.textContent=
-(speed*3.6).toFixed(0)+" KM/H";
-}
+if(speed!==null&&!isNaN(speed))speedDisplay.textContent=(speed*3.6).toFixed(0);
 gpsDisplay.textContent="AKTIV";
-},
-()=>{
-gpsDisplay.textContent="KEIN GPS";
-},
-{
-enableHighAccuracy:true,
-maximumAge:1000,
-timeout:10000
-}
-);
+},()=>{gpsDisplay.textContent="KEIN GPS"}, {enableHighAccuracy:true,maximumAge:1000,timeout:10000});
 }
 function startTimer(){
 startTime=Date.now();
 timer=setInterval(()=>{
-const elapsed=
-Math.floor(
-(Date.now()-startTime)/1000
-);
-const minutes=
-Math.floor(elapsed/60);
-const seconds=
-elapsed%60;
-timeDisplay.textContent=
-String(minutes).padStart(2,"0")
-+":"
-+String(seconds).padStart(2,"0");
+const elapsed=Math.floor((Date.now()-startTime)/1000),minutes=Math.floor(elapsed/60),seconds=elapsed%60;
+const formatted=String(minutes).padStart(2,"0")+":"+String(seconds).padStart(2,"0");
+timeDisplay.textContent=formatted;recordTime.textContent=formatted;
 },250);
 }
+function resetValues(){
+speedDisplay.textContent="0";gpsDisplay.textContent="KEIN GPS";gforceDisplay.textContent="0.00 G";sensorDispla
+gravityX=0;gravityY=0;gravityZ=0;gravityReady=false;filteredG=0;motionEvents=0;
+}
 function stopRace(){
-running=false;
-startButton.textContent="START";
-if(timer){
-clearInterval(timer);
-timer=null;
+running=false;startButton.textContent="START";startButton.classList.remove("stop");recordBadge.classList.remov
+if(timer){clearInterval(timer);timer=null}
+if(gpsWatch!==null){navigator.geolocation.clearWatch(gpsWatch);gpsWatch=null}
+const stream=camera.srcObject;if(stream)stream.getTracks().forEach(track=>track.stop());camera.srcObject=null;
 }
-if(gpsWatch!==null){
-navigator.geolocation.clearWatch(gpsWatch);
-gpsWatch=null;
-}
-const stream=camera.srcObject;
-if(stream){
-stream
-.getTracks()
-.forEach(track=>track.stop());
-camera.srcObject=null;
-}
-}
-startButton.addEventListener(
-"click",
-async()=>{
-if(running){
-stopRace();
-return;
-}
-running=true;
-startButton.textContent="STOP";
-/*
-Neue Runde:
-Sensorwerte zurücksetzen.
-*/
-motionEvents=0;
-gravityReady=false;
-gravityX=0;
-gravityY=0;
-gravityZ=0;
-filteredG=0;
-peakG=0;
-gforceDisplay.textContent="0.00 G";
-/*
-1. Bewegungssensor
-2. Kamera
-3. GPS
-4. Timer
-*/
-await startMotion();
-await startCamera();
-startGPS();
-startTimer();
-}
-);
+startButton.addEventListener("click",async()=>{
+if(running){stopRace();return}
+running=true;startButton.textContent="STOP";startButton.classList.add("stop");recordBadge.classList.add("activ
+await startMotion();await startCamera();startGPS();startTimer();
+});
 </script>
 </body>
 </html>
