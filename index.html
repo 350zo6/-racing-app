@@ -136,25 +136,43 @@ color:#fff;font-size:15px;text-align:left;
 #speed{font-size:45px}
 }
 @media (orientation:landscape){
-#header{padding:0 24px;height:72px}
+#header{
+padding:0 24px;height:82px;
+}
 #logo{font-size:23px}
 #tagline{font-size:8px}
+/* Speed gets its own space; menu sits separately at the far right. */
+#speedBox{
+position:absolute;
+right:82px;
+top:0;
+}
 #speed{font-size:44px}
 #speedUnit{font-size:9px}
 #rec{left:24px;top:calc(68px + var(--safe-top))}
-#menuBtn{right:24px;top:calc(14px + var(--safe-top))}
-#hud{
-left:auto;right:22px;width:min(360px,38vw);
-bottom:calc(82px + var(--safe-bottom));
-grid-template-columns:1fr 1fr;gap:9px;
+#menuBtn{
+right:22px;
+top:calc(16px + var(--safe-top));
+width:42px;height:42px;
 }
-.card{padding:10px 11px}
+/* Telemetry becomes a clean right-side rail instead of floating in the middle. */
+#hud{
+left:auto;
+right:22px;
+top:calc(112px + var(--safe-top));
+bottom:auto;
+width:min(300px,31vw);
+grid-template-columns:1fr;
+gap:8px;
+}
+.card{padding:10px 12px}
 .value{font-size:16px}
 #controls{
-left:22px;right:auto;bottom:calc(18px + var(--safe-bottom));
+left:22px;right:auto;
+bottom:calc(18px + var(--safe-bottom));
 justify-content:flex-start;
 }
-#start{width:min(330px,42vw);height:54px}
+#start{width:min(330px,38vw);height:54px}
 #status{
 left:22px;transform:none;
 bottom:calc(79px + var(--safe-bottom));
