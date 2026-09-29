@@ -3,220 +3,227 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="theme-color" content="#070707">
+<meta name="theme-color" content="#050505">
 <title>DM Motion</title>
 <style>
 :root{
---bg:#050505; --panel:rgba(18,18,20,.76); --line:rgba(255,255,255,.10);
---text:#f5f5f5; --muted:#929292; --red:#ff2028; --red2:#b90008;
---green:#50e58a; --safe-top:env(safe-area-inset-top); --safe-bottom:env(safe-area-inset-bottom);
+--red:#ff2028; --bg:#050505; --panel:rgba(18,18,20,.78);
+--line:rgba(255,255,255,.12); --safe-top:env(safe-area-inset-top);
+--safe-bottom:env(safe-area-inset-bottom)
 }
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
-html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#050505;color:var(--text);
+html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#050505;color:#fff;
 font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display","Helvetica Neue",Arial,sans-serif}
 body{touch-action:manipulation}
 #app{position:fixed;inset:0;background:#050505}
-#camera{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;background:#111;z-index:0;display:block}
+#camera{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;background:#111;z-index:0}
 #shade{position:absolute;inset:0;z-index:1;pointer-events:none;
-background:linear-gradient(180deg,rgba(0,0,0,.58) 0%,rgba(0,0,0,.04) 34%,rgba(0,0,0,.15) 58%,rgba(0,0,0,.84) 100%)}
+background:linear-gradient(180deg,rgba(0,0,0,.62) 0%,rgba(0,0,0,.03) 34%,rgba(0,0,0,.12) 58%,rgba(0,0,0,.88) 100%)}
+#placeholder{position:absolute;inset:0;z-index:2;display:flex;align-items:center;justify-content:center;
+color:#333;font-size:12px;letter-spacing:2px;pointer-events:none}
 #top{position:absolute;top:calc(12px + var(--safe-top));left:0;right:0;z-index:5;
-display:flex;align-items:flex-start;justify-content:space-between;padding:0 18px}
-.brand{display:flex;align-items:center;gap:9px;text-shadow:0 2px 12px #000}
-.brandMark{font-size:23px;font-weight:900;letter-spacing:-1.5px}.brandMark b{font-weight:950}.brandMark span{color:var(--red);font-weight:900;margin:0 3px}
-.brandMark span{color:var(--red)}
-.brandSub{font-size:10px;letter-spacing:2.5px;font-weight:700;color:#ddd;margin-top:2px}
-.speed{text-align:right;line-height:.85;text-shadow:0 3px 16px #000}
-.speedNum{font-size:48px;font-weight:800;letter-spacing:-2px}
-.speedUnit{font-size:10px;letter-spacing:2px;color:#ddd;font-weight:700}
-#rec{position:absolute;left:18px;top:calc(68px + var(--safe-top));z-index:5;
-display:none;align-items:center;gap:7px;padding:7px 10px;border:1px solid rgba(255,255,255,.18);
-background:rgba(0,0,0,.48);border-radius:999px;font-size:10px;font-weight:800;letter-spacing:1.5px}
-.recDot{width:7px;height:7px;border-radius:50%;background:var(--red);box-shadow:0 0 10px var(--red)}
-#hud{position:absolute;left:16px;right:16px;bottom:calc(92px + var(--safe-bottom));z-index:5;
+display:flex;justify-content:space-between;align-items:flex-start;padding:0 18px}
+.brand{font-weight:900;letter-spacing:-1.4px;font-size:25px;text-shadow:0 2px 14px #000}
+.brand .slash{color:var(--red)}
+.sub{font-size:9px;letter-spacing:2.8px;color:#bbb;margin-top:4px;font-weight:700}
+.speed{text-align:right;text-shadow:0 3px 14px #000}
+.speedNum{font-size:47px;font-weight:850;line-height:.9;letter-spacing:-2px}
+.speedUnit{font-size:10px;letter-spacing:2px;font-weight:800;color:#ddd;margin-top:5px}
+#rec{display:none;position:absolute;left:18px;top:calc(70px + var(--safe-top));z-index:6;
+align-items:center;gap:7px;padding:7px 10px;border-radius:999px;background:rgba(0,0,0,.5);
+border:1px solid rgba(255,255,255,.15);font-size:9px;font-weight:900;letter-spacing:1.5px}
+.dot{width:7px;height:7px;border-radius:50%;background:var(--red);box-shadow:0 0 10px var(--red)}
+#menuBtn{position:absolute;right:16px;top:calc(72px + var(--safe-top));z-index:8;
+width:42px;height:42px;border-radius:13px;border:1px solid rgba(255,255,255,.18);
+background:rgba(0,0,0,.45);color:#fff;font-size:21px}
+#hud{position:absolute;left:16px;right:16px;bottom:calc(91px + var(--safe-bottom));z-index:5;
 display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
-.card{min-width:0;padding:11px 10px;border:1px solid var(--line);border-radius:13px;background:var(--panel);
-backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);box-shadow:0 10px 30px rgba(0,0,0,.25)}
-.label{font-size:8px;letter-spacing:1.5px;color:#8d8d8d;font-weight:800}
-.value{font-size:17px;font-weight:750;margin-top:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-#controls{position:absolute;left:0;right:0;bottom:calc(10px + var(--safe-bottom));z-index:6;
-display:flex;justify-content:center;align-items:center;gap:12px}
-#startBtn{width:calc(100% - 32px);max-width:520px;height:58px;border:0;border-radius:17px;
-background:linear-gradient(180deg,#ff3038,#e20d15);color:white;font-size:15px;font-weight:900;letter-spacing:1.8px;
-box-shadow:0 10px 35px rgba(255,25,35,.28)}
-#startBtn:active{transform:scale(.985)}
-#startBtn.stop{background:rgba(10,10,10,.78);border:1px solid rgba(255,255,255,.22);box-shadow:none}
-#status{position:absolute;left:50%;transform:translateX(-50%);bottom:calc(78px + var(--safe-bottom));z-index:7;
-font-size:9px;letter-spacing:1.1px;color:#bbb;text-align:center;white-space:nowrap;text-shadow:0 2px 8px #000}
-#menuBtn{position:absolute;right:16px;top:calc(72px + var(--safe-top));z-index:8;width:40px;height:40px;
-border:1px solid rgba(255,255,255,.18);border-radius:12px;background:rgba(0,0,0,.42);color:#fff;font-size:20px}
-#menu{position:absolute;inset:0;z-index:20;display:none;background:rgba(0,0,0,.72);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px)}
+.card{min-width:0;padding:11px 10px;border:1px solid var(--line);border-radius:14px;
+background:var(--panel);backdrop-filter:blur(15px);-webkit-backdrop-filter:blur(15px)}
+.label{font-size:8px;letter-spacing:2px;color:#888;font-weight:850}
+.value{font-size:17px;font-weight:800;margin-top:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#status{position:absolute;left:50%;transform:translateX(-50%);bottom:calc(76px + var(--safe-bottom));
+z-index:7;color:#aaa;font-size:9px;letter-spacing:1.6px;white-space:nowrap;text-shadow:0 2px 8px #000}
+#controls{position:absolute;left:0;right:0;bottom:calc(9px + var(--safe-bottom));z-index:7;
+display:flex;justify-content:center}
+#start{width:calc(100% - 32px);max-width:520px;height:58px;border:0;border-radius:18px;
+background:linear-gradient(180deg,#ff3038,#e20d15);color:#fff;font-size:15px;font-weight:950;
+letter-spacing:2px;box-shadow:0 12px 35px rgba(255,25,35,.28)}
+#start.stop{background:rgba(10,10,10,.84);border:1px solid rgba(255,255,255,.24);box-shadow:none}
+#menu{position:absolute;inset:0;z-index:20;display:none;background:rgba(0,0,0,.72);
+backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px)}
 #menu.open{display:block}
-.menuPanel{position:absolute;top:0;bottom:0;left:0;width:min(360px,88vw);padding:calc(22px + var(--safe-top)) 20px calc(20px + var(--safe-bottom));
-background:rgba(10,10,11,.96);border-right:1px solid rgba(255,255,255,.1);box-shadow:20px 0 50px #000}
-.menuHead{display:flex;justify-content:space-between;align-items:center;margin-bottom:30px}
-.close{border:0;background:transparent;color:#fff;font-size:28px}
-.menuTitle{font-size:26px;font-weight:850;letter-spacing:-1px}
-.menuSub{font-size:10px;letter-spacing:2px;color:#777;margin-top:4px}
-.menuItem{width:100%;display:flex;align-items:center;justify-content:space-between;padding:17px 2px;
-background:none;border:0;border-bottom:1px solid rgba(255,255,255,.08);color:#fff;font-size:15px;text-align:left}
-.menuItem small{color:#777;font-size:18px}
-#permissionNote{display:none;position:absolute;inset:0;z-index:30;align-items:center;justify-content:center;padding:25px;background:#050505}
-.note{max-width:430px;border:1px solid var(--line);background:#101012;border-radius:20px;padding:26px;text-align:center}
-.note h2{margin:0 0 10px;font-size:24px}.note p{color:#aaa;line-height:1.5;font-size:14px}.note button{margin-top:10px;width:100%;height:50px;border:0;border-radius:14px;b
+.panel{position:absolute;left:0;top:0;bottom:0;width:min(360px,88vw);background:rgba(10,10,11,.97);
+border-right:1px solid rgba(255,255,255,.1);padding:calc(22px + var(--safe-top)) 20px calc(20px + var(--safe-bottom))}
+.menuHead{display:flex;justify-content:space-between;align-items:center;margin-bottom:28px}
+.menuTitle{font-size:27px;font-weight:900;letter-spacing:-1px}
+.menuSub{font-size:9px;letter-spacing:2px;color:#777;margin-top:4px}
+.close{border:0;background:none;color:#fff;font-size:30px}
+.item{display:flex;justify-content:space-between;width:100%;padding:17px 2px;background:none;
+border:0;border-bottom:1px solid rgba(255,255,255,.08);color:#fff;font-size:15px;text-align:left}
+.item span{color:#666;font-size:20px}
+@media (max-width:600px) and (orientation:portrait){
+#hud{grid-template-columns:repeat(2,1fr)}
+.speedNum{font-size:44px}
+}
 @media (orientation:landscape){
-#top{padding:0 22px}
-.speedNum{font-size:42px}
+#top{padding:0 22px}.speedNum{font-size:42px}
 #menuBtn{top:calc(14px + var(--safe-top));right:22px}
 #rec{left:22px;top:calc(62px + var(--safe-top))}
-#hud{left:auto;right:18px;bottom:calc(84px + var(--safe-bottom));width:245px;grid-template-columns:1fr 1fr}
+#hud{left:auto;right:18px;bottom:calc(82px + var(--safe-bottom));width:245px;grid-template-columns:1fr 1fr}
 #controls{left:20px;right:auto;bottom:calc(18px + var(--safe-bottom));justify-content:flex-start}
-#startBtn{width:235px;height:52px}
-#status{left:20px;transform:none;bottom:calc(78px + var(--safe-bottom));text-align:left}
-}
-@media (max-width:600px) and (orientation:portrait){
-.speedNum{font-size:44px}
-#hud{grid-template-columns:repeat(2,1fr);bottom:calc(90px + var(--safe-bottom))}
-#controls{bottom:calc(9px + var(--safe-bottom))}
-#startBtn{height:56px}
+#start{width:235px;height:52px}
+#status{left:20px;transform:none;bottom:calc(77px + var(--safe-bottom))}
 }
 </style>
 </head>
 <body>
 <div id="app">
 <video id="camera" autoplay playsinline muted></video>
+<div id="placeholder">CAMERA READY</div>
 <div id="shade"></div>
-<div id="cameraHint" style="position:absolute;inset:0;z-index:2;display:flex;align-items:center;justify-content:center;color:#666;font-size:10px;letter-spacing:2px;poin
 <div id="top">
-<div class="brand">
 <div>
 </div>
 </div>
-</div>
-<div class="brandMark"><b>DM</b><span>//</span>MOTION</div>
-<div class="brandSub">DRIVE TELEMETRY</div>
+<div class="brand">DM<span class="slash">//</span>MOTION</div>
+<div class="sub">DRIVE TELEMETRY</div>
 <div class="speed"><div class="speedNum" id="speed">0</div><div class="speedUnit">KM/H</div></div>
 <button id="menuBtn" aria-label="Menü">■</button>
-<div id="rec"><i class="recDot"></i>REC</div>
+<div id="rec"><i class="dot"></i>REC</div>
 <div id="hud">
-<div class="card"><div class="label">GPS</div><div class="value" id="gps">WAITING</div></div>
-<div class="card"><div class="label">G-KRAFT</div><div class="value" id="g">0.00 G</div></div>
+<div class="card"><div class="label">GPS</div><div class="value" id="gps">BEREIT</div></div>
+<div class="card"><div class="label">G-KRAFT</div><div class="value" id="gforce">0.00 G</div></div>
 <div class="card"><div class="label">SENSOR</div><div class="value" id="sensor">BEREIT</div></div>
-<div class="card"><div class="label">ZEIT</div><div class="value" id="time">00:00.0</div></div>
+<div class="card"><div class="label">ZEIT</div><div class="value" id="time">00:00</div></div>
 </div>
 <div id="status">DM MOTION • READY</div>
-<div id="controls"><button id="startBtn">START DRIVE</button></div>
+<div id="controls"><button id="start">START DRIVE</button></div>
 <div id="menu">
-<div class="menuPanel">
+<div class="panel">
 <div class="menuHead">
 <div><div class="menuTitle">DM Motion</div><div class="menuSub">DRIVE TELEMETRY</div></div>
 <button class="close" id="closeMenu">×</button>
 </div>
-<button class="menuItem">Drive <small>›</small></button>
-<button class="menuItem">My Drives <small>›</small></button>
-<button class="menuItem">Analysis <small>›</small></button>
-<button class="menuItem">Tracks <small>›</small></button>
-<button class="menuItem">Settings <small>›</small></button>
-<div style="position:absolute;left:20px;bottom:calc(20px + var(--safe-bottom));color:#555;font-size:9px;letter-spacing:1.5px">DM MOTION • BUILD 0.1</div>
+<button class="item">Drive <span>›</span></button>
+<button class="item">My Drives <span>›</span></button>
+<button class="item">Analysis <span>›</span></button>
+<button class="item">Tracks <span>›</span></button>
+<button class="item">Settings <span>›</span></button>
 </div>
 </div>
 </div>
 <script>
-const video=document.getElementById('camera'), cameraHint=document.getElementById('cameraHint'), startBtn=document.getElementById('startBtn');
-const speedEl=document.getElementById('speed'), gpsEl=document.getElementById('gps');
-const gEl=document.getElementById('g'), sensorEl=document.getElementById('sensor');
-const timeEl=document.getElementById('time'), recEl=document.getElementById('rec'), statusEl=document.getElementById('status');
-const menu=document.getElementById('menu');
-let stream=null, watchId=null, timer=null, running=false, startTime=0;
-let gravity={x:0,y:0,z:0}, gSmooth=0, motionOK=false;
-function setStatus(t){statusEl.textContent=t}
-function fmtTime(ms){let s=ms/1000;let m=Math.floor(s/60);let sec=(s%60).toFixed(1).padStart(4,'0');return String(m).padStart(2,'0')+':'+sec}
-function resetValues(){speedEl.textContent='0';gpsEl.textContent='WAITING';gEl.textContent='0.00 G';sensorEl.textContent='BEREIT';timeEl.textContent='00:00.0';gravity={x:
-function motionHandler(e){
-const a=e.accelerationIncludingGravity;
-if(!a || a.x==null) return;
-const alpha=.92;
-gravity.x=alpha*gravity.x+(1-alpha)*a.x;
-gravity.y=alpha*gravity.y+(1-alpha)*a.y;
-gravity.z=alpha*gravity.z+(1-alpha)*a.z;
-const dx=a.x-gravity.x,dy=a.y-gravity.y,dz=a.z-gravity.z;
-const raw=Math.sqrt(dx*dx+dy*dy+dz*dz)/9.80665;
-gSmooth=.25*raw+.75*gSmooth;
-gEl.textContent=gSmooth.toFixed(2)+' G';
-if(running){motionOK=true;sensorEl.textContent='AKTIV'}
+const camera=document.getElementById("camera"),placeholder=document.getElementById("placeholder");
+const startButton=document.getElementById("start"),speedDisplay=document.getElementById("speed");
+const gpsDisplay=document.getElementById("gps"),gforceDisplay=document.getElementById("gforce");
+const sensorDisplay=document.getElementById("sensor"),timeDisplay=document.getElementById("time");
+const recordBadge=document.getElementById("rec"),statusDisplay=document.getElementById("status");
+let running=false,startTime=null,timer=null,gpsWatch=null,motionListenerAdded=false;
+let motionEvents=0,gravityX=0,gravityY=0,gravityZ=0,gravityReady=false,filteredG=0;
+function setStatus(t){statusDisplay.textContent=t}
+function resetValues(){
+speedDisplay.textContent="0";gpsDisplay.textContent="BEREIT";gforceDisplay.textContent="0.00 G";
+sensorDisplay.textContent="BEREIT";timeDisplay.textContent="00:00";
+gravityX=0;gravityY=0;gravityZ=0;gravityReady=false;filteredG=0;motionEvents=0;
 }
-async function requestMotion(){
+function handleMotion(event){
+motionEvents++;
+if(motionEvents===1)sensorDisplay.textContent="AKTIV";
+const a=event.accelerationIncludingGravity;
+if(!a||a.x===null||a.y===null||a.z===null){sensorDisplay.textContent="KEINE DATEN";return}
+const x=Number(a.x)||0,y=Number(a.y)||0,z=Number(a.z)||0,alpha=.92;
+if(!gravityReady){
+gravityX=x;gravityY=y;gravityZ=z;gravityReady=true;filteredG=0;gforceDisplay.textContent="0.00 G";return;
+}
+gravityX=alpha*gravityX+(1-alpha)*x;
+gravityY=alpha*gravityY+(1-alpha)*y;
+gravityZ=alpha*gravityZ+(1-alpha)*z;
+const dx=x-gravityX,dy=y-gravityY,dz=z-gravityZ;
+const acceleration=Math.sqrt(dx*dx+dy*dy+dz*dz);
+const rawG=acceleration/9.80665;
+filteredG=filteredG*.75+rawG*.25;
+gforceDisplay.textContent=filteredG.toFixed(2)+" G";
+}
+async function startMotion(){
+sensorDisplay.textContent="PRÜFE...";
+if(!window.DeviceMotionEvent){sensorDisplay.textContent="NICHT VERFÜGBAR";return false}
 try{
-if(typeof DeviceMotionEvent!=='undefined' && typeof DeviceMotionEvent.requestPermission==='function'){
-const p=await DeviceMotionEvent.requestPermission();
-if(p!=='granted') throw new Error('Motion denied');
+if(typeof DeviceMotionEvent.requestPermission==="function"){
+const permission=await DeviceMotionEvent.requestPermission();
+if(permission!=="granted"){sensorDisplay.textContent="KEINE FREIGABE";return false}
 }
-window.addEventListener('devicemotion',motionHandler);
-motionOK=true;sensorEl.textContent='AKTIV';return true;
-}catch(e){sensorEl.textContent='FEHLER';return false}
+if(!motionListenerAdded){
+window.addEventListener("devicemotion",handleMotion);
+motionListenerAdded=true;
+}
+sensorDisplay.textContent="WARTEN";motionEvents=0;
+setTimeout(()=>{if(running&&motionEvents===0)sensorDisplay.textContent="KEIN SIGNAL"},2500);
+return true;
+}catch(error){console.log(error);sensorDisplay.textContent="FEHLER";return false}
 }
 async function startCamera(){
-if(!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia){
-setStatus('KAMERA NICHT VERFÜGBAR'); return false;
-}
 try{
-// iPhone Safari: use a flexible rear-camera request instead of "exact".
-const s=await navigator.mediaDevices.getUserMedia({
-video:{facingMode:'environment',width:{ideal:1920},height:{ideal:1080}},
-audio:false
+const stream=await navigator.mediaDevices.getUserMedia({
+video:{facingMode:{exact:"environment"}},audio:false
 });
-stream=s;
-video.srcObject=s;
-video.muted=true;
-video.playsInline=true;
-cameraHint.style.display='none';
-await video.play().catch(()=>{});
+camera.srcObject=stream;
+camera.muted=true;
+camera.playsInline=true;
+placeholder.style.display="none";
+await camera.play().catch(()=>{});
 return true;
-}catch(e){
-console.log('Camera error:',e);
-try{
-const s=await navigator.mediaDevices.getUserMedia({video:true,audio:false});
-stream=s; video.srcObject=s; await video.play().catch(()=>{}); return true;
-}catch(err){
-console.log('Fallback camera error:',err);
-setStatus('KAMERA-BERECHTIGUNG PRÜFEN'); return false;
-}
+}catch(error){
+console.log("Camera:",error);
+setStatus("KAMERA NICHT FREIGEGEBEN");
+return false;
 }
 }
 function startGPS(){
-if(!navigator.geolocation){gpsEl.textContent='NICHT VERFÜGBAR';return}
-watchId=navigator.geolocation.watchPosition(pos=>{
-const kmh=pos.coords.speed==null?0:Math.max(0,pos.coords.speed*3.6);
-speedEl.textContent=Math.round(kmh);
-gpsEl.textContent=pos.coords.accuracy?Math.round(pos.coords.accuracy)+' M':'AKTIV';
-},()=>{gpsEl.textContent='FEHLER'},{enableHighAccuracy:true,maximumAge:1000,timeout:10000});
+if(!navigator.geolocation){gpsDisplay.textContent="NICHT VERFÜGBAR";return}
+gpsWatch=navigator.geolocation.watchPosition(position=>{
+const speed=position.coords.speed;
+if(speed!==null&&!isNaN(speed))speedDisplay.textContent=(speed*3.6).toFixed(0);
+gpsDisplay.textContent="AKTIV";
+},()=>{gpsDisplay.textContent="KEIN GPS"},
+{enableHighAccuracy:true,maximumAge:1000,timeout:10000});
 }
-async function startDrive(){
-if(running)return;
-// Keep the first user tap as the permission gesture on iPhone Safari.
-setStatus('STARTING…');
-await requestMotion();
-running=true;
-startTime=performance.now();
-timer=setInterval(()=>timeEl.textContent=fmtTime(performance.now()-startTime),100);
-recEl.style.display='flex';
-startBtn.textContent='STOP DRIVE';
-startBtn.classList.add('stop');
-startGPS();
-const camOK=await startCamera();
-if(camOK) setStatus('DM MOTION • RECORDING');
+function startTimer(){
+startTime=Date.now();
+timer=setInterval(()=>{
+const elapsed=Math.floor((Date.now()-startTime)/1000);
+const minutes=Math.floor(elapsed/60),seconds=elapsed%60;
+timeDisplay.textContent=String(minutes).padStart(2,"0")+":"+String(seconds).padStart(2,"0");
+},250);
 }
-function stopDrive(){
+function stopRace(){
 running=false;
-if(timer)clearInterval(timer);timer=null;
-if(watchId!==null)navigator.geolocation.clearWatch(watchId);watchId=null;
-if(stream){stream.getTracks().forEach(t=>t.stop());stream=null} video.srcObject=null; cameraHint.style.display='flex';
-recEl.style.display='none';startBtn.textContent='START DRIVE';startBtn.classList.remove('stop');
-resetValues();setStatus('DM MOTION • READY');
+startButton.textContent="START DRIVE";startButton.classList.remove("stop");
+recordBadge.style.display="none";
+if(timer){clearInterval(timer);timer=null}
+if(gpsWatch!==null){navigator.geolocation.clearWatch(gpsWatch);gpsWatch=null}
+const stream=camera.srcObject;
+if(stream)stream.getTracks().forEach(track=>track.stop());
+camera.srcObject=null;placeholder.style.display="flex";
+resetValues();setStatus("DM MOTION • READY");
 }
-startBtn.addEventListener('click',()=>running?stopDrive():startDrive());
-document.getElementById('menuBtn').onclick=()=>menu.classList.add('open');
-document.getElementById('closeMenu').onclick=()=>menu.classList.remove('open');
-menu.addEventListener('click',e=>{if(e.target===menu)menu.classList.remove('open')});
+startButton.addEventListener("click",async()=>{
+if(running){stopRace();return}
+running=true;
+startButton.textContent="STOP DRIVE";startButton.classList.add("stop");
+recordBadge.style.display="flex";resetValues();
+setStatus("STARTING...");
+await startMotion();
+await startCamera();
+startGPS();
+startTimer();
+if(camera.srcObject)setStatus("DM MOTION • RECORDING");
+});
+document.getElementById("menuBtn").onclick=()=>document.getElementById("menu").classList.add("open");
+document.getElementById("closeMenu").onclick=()=>document.getElementById("menu").classList.remove("open");
+document.getElementById("menu").addEventListener("click",e=>{
+if(e.target===document.getElementById("menu"))document.getElementById("menu").classList.remove("open");
+});
 resetValues();
 </script>
 </body>
