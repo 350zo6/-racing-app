@@ -373,8 +373,10 @@ const QUALITY_MAP={
 "2K":{width:2560,height:1440},
 "4K":{width:3840,height:2160}
 };
-// Orientation is detected automatically when recording starts.
-// The user does not need to choose portrait/landscape in Settings.
+// v22 recording: keep one fixed MP4 track size for the whole recording.
+// Safari/MediaRecorder does not reliably support resizing captureStream()
+// while recording. The output aspect is chosen at START; the camera image
+// is reoriented inside that fixed frame when the phone rotates.
 let recordingPortrait=false;
 let recordingDrawCounter=0;
 let recordingDrawEvery=1;
@@ -384,26 +386,6 @@ recordingPortrait=window.innerHeight > window.innerWidth;
 return recordingPortrait
 ? {width:target.height,height:target.width}
 : {width:target.width,height:target.height};
-}
-function getCurrentRecordingDimensions(){
-const target=QUALITY_MAP[videoQuality] || QUALITY_MAP["1080p"];
-const portrait=window.innerHeight > window.innerWidth;
-return portrait
-? {width:target.height,height:target.width,portrait:true}
-: {width:target.width,height:target.height,portrait:false};
-}
-function syncRecordingOrientation(){
-if(!recordingCanvas || !recordingCanvasCtx) return;
-const next=getCurrentRecordingDimensions();
-if(next.portrait===recordingPortrait &&
-recordingCanvas.width===next.width &&
-recordingCanvas.height===next.height) return;
-recordingPortrait=next.portrait;
-// Resizing a canvas clears it. Do this only when the real phone orientation
-// changes, then the very next animation frame redraws the complete frame.
-recordingCanvas.width=next.width;
-recordingCanvas.height=next.height;
-recordingCanvasCtx=recordingCanvas.getContext("2d",{alpha:false});
 }
 function updateRecordingPerformance(){
 // 4K60 through a canvas is extremely demanding on iPhone Safari.
@@ -558,13 +540,9 @@ if(!recordingCanvas || !recordingCanvasCtx || !camera.videoWidth || !camera.vide
 recordingAnimationFrame=requestAnimationFrame(drawRecordingOverlay);
 return;
 }
-syncRecordingOrientation();
 const ctx=recordingCanvasCtx;
 const w=recordingCanvas.width;
 const h=recordingCanvas.height;
-// On 4K/60 we intentionally update the heavy 4K canvas every second
-// animation frame. The captured stream remains configured for 60 FPS,
-// while duplicate frames keep playback smooth instead of stuttering badly.
 recordingDrawCounter++;
 if(recordingDrawCounter % recordingDrawEvery !== 0){
 recordingAnimationFrame=requestAnimationFrame(drawRecordingOverlay);
@@ -574,10 +552,7 @@ ctx.fillStyle="#000";
 ctx.fillRect(0,0,w,h);
 const sourceW=camera.videoWidth || w;
 const sourceH=camera.videoHeight || h;
-// Use the actual decoded camera orientation. This is important on iPhone:
-// the live <video> may already be correctly oriented even when Safari reports
-// a landscape pixel buffer. Rotate only when the source aspect ratio proves
-// that the frame really needs a 90° rotation for the requested output.
+const currentPortrait=window.innerHeight > window.innerWidth;
 function drawCover(targetW,targetH){
 const sourceRatio=sourceW/sourceH;
 const targetRatio=targetW/targetH;
@@ -591,33 +566,31 @@ sy=(sourceH-sh)/2;
 }
 ctx.drawImage(camera,sx,sy,sw,sh,0,0,targetW,targetH);
 }
-// The live camera preview stays untouched. For the saved video we adapt the
-// camera buffer to the phone orientation, then fill the exact 9:16 or 16:9
-// recording canvas. This keeps the overlays inside the final video frame.
-if(recordingPortrait && sourceW>sourceH){
+// Never resize the recording canvas during capture.
+// Only rotate the current camera frame when the phone orientation differs
+// from the orientation used when the recording started.
+if(currentPortrait !== recordingPortrait){
 ctx.save();
+if(recordingPortrait){
 ctx.translate(0,h);
 ctx.rotate(Math.PI/2);
 drawCover(h,w);
-ctx.restore();
-}else if(!recordingPortrait && sourceH>sourceW){
-ctx.save();
+}else{
 ctx.translate(w,0);
 ctx.rotate(-Math.PI/2);
 drawCover(h,w);
+}
 ctx.restore();
 }else{
 drawCover(w,h);
 }
 const scale=Math.max(w,h)/1280;
 const pad=Math.max(24,Math.round(30*scale));
-const small=Math.max(14,Math.round(18*scale));
 const logoSize=Math.max(20,Math.round(30*scale));
 const speedSize=Math.max(42,Math.round(66*scale));
 const unitSize=Math.max(13,Math.round(18*scale));
 const dataSize=Math.max(16,Math.round(23*scale));
 const radius=Math.max(10,Math.round(14*scale));
-// Very subtle top-left branding.
 ctx.save();
 ctx.font=`800 ${logoSize}px Arial, sans-serif`;
 ctx.textBaseline="top";
@@ -629,9 +602,7 @@ ctx.fillText("//",pad+dmWidth+Math.round(3*scale),pad);
 const slashWidth=ctx.measureText("//").width;
 ctx.fillStyle="rgba(255,255,255,.96)";
 ctx.fillText("MOTION",pad+dmWidth+slashWidth+Math.round(7*scale),pad);
-// Keep the recorded-video branding clean: DM//MOTION only.
 ctx.restore();
-// Speed top-right.
 const speed=String(speedDisplay.textContent||"0");
 ctx.save();
 ctx.textAlign="right";
@@ -643,7 +614,6 @@ ctx.font=`700 ${unitSize}px Arial, sans-serif`;
 ctx.fillStyle="rgba(255,255,255,.72)";
 ctx.fillText("KM/H",w-pad,pad+speedSize+Math.round(4*scale));
 ctx.restore();
-// Bottom-right telemetry: three driving G values + elapsed time.
 const lateralText=String(gLateralDisplay.textContent||"0.00 G");
 const brakeText=String(gBrakeDisplay.textContent||"0.00 G");
 const accelText=String(gAccelDisplay.textContent||"0.00 G");
@@ -674,7 +644,6 @@ ctx.fillText(`LATERAL ${lateralText}`,textX,boxY+textTop);
 ctx.fillText(`BRAKE ${brakeText}`,textX,boxY+textTop+line);
 ctx.fillText(`ACCEL ${accelText}`,textX,boxY+textTop+(line*2));
 ctx.font=`800 ${timeSize}px Arial, sans-serif`;
-ctx.fillStyle="rgba(255,255,255,.96)";
 ctx.fillText(timeText,textX,boxY+textTop+(line*3));
 ctx.restore();
 recordingAnimationFrame=requestAnimationFrame(drawRecordingOverlay);
@@ -687,8 +656,8 @@ return null;
 }
 recordingCanvas=document.createElement("canvas");
 const dimensions=getRecordingDimensions();
-// Output dimensions are true 9:16 in portrait and 16:9 in landscape.
-// No 4:3 output is used.
+// Output dimensions are selected ONCE at recording start.
+// The canvas is never resized while captureStream()/MediaRecorder is active.
 recordingCanvas.width=dimensions.width;
 recordingCanvas.height=dimensions.height;
 recordingCanvasCtx=recordingCanvas.getContext("2d",{alpha:false});
@@ -953,7 +922,7 @@ gpsWatch=null;
 }
 return;
 }
-setStatus("DM MOTION • RECORDING");
+setStatus(recordingPortrait ? "DM MOTION • RECORDING • PORTRAIT" : "DM MOTION • RECORDING • LANDSCAPE");
 }
 });
 saveVideoButton.addEventListener("click",saveRecordedVideo);
