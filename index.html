@@ -958,5 +958,32 @@ updateSettingsUI();
 prepareSaveButton();
 resetValues();
 </script>
+<script>
+(function(){
+let lastOrientation = window.innerHeight > window.innerWidth ? "HOCHFORMAT" : "QUERFORMAT";
+const indicator = document.createElement("div");
+indicator.id = "dmOrientationTest";
+indicator.style.cssText =
+"position:fixed;left:50%;top:12px;transform:translateX(-50%);" +
+"z-index:99999;padding:7px 12px;border-radius:10px;" +
+"background:rgba(0,0,0,.75);color:#fff;font:700 13px Arial;" +
+"letter-spacing:.4px;pointer-events:none;display:none;";
+document.body.appendChild(indicator);
+function updateOrientationTest(){
+const current = window.innerHeight > window.innerWidth ? "HOCHFORMAT" : "QUERFORMAT";
+if(current !== lastOrientation){
+lastOrientation = current;
+indicator.textContent = "AUSRICHTUNG: " + current;
+indicator.style.display = "block";
+clearTimeout(updateOrientationTest.hideTimer);
+updateOrientationTest.hideTimer = setTimeout(()=>{
+indicator.style.display = "none";
+},1800);
+}
+}
+window.addEventListener("orientationchange", updateOrientationTest, {passive:true});
+window.addEventListener("resize", updateOrientationTest, {passive:true});
+})();
+</script>
 </body>
 </html>
