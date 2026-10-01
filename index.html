@@ -454,7 +454,9 @@ ctx.restore();
 recordingAnimationFrame=requestAnimationFrame(drawRecordingOverlay);
 }
 function createRecordingStream(cameraStream){
-if(!camera.captureStream || !HTMLCanvasElement.prototype.captureStream){
+// iOS Safari does not provide HTMLVideoElement.captureStream().
+// The telemetry video is generated from the canvas, so only canvas.captureStream() is required.
+if(!HTMLCanvasElement.prototype.captureStream){
 return null;
 }
 recordingCanvas=document.createElement("canvas");
@@ -493,7 +495,7 @@ recordedBlob=null;
 recordingMimeType=chooseRecordingMimeType();
 const recordingStream=createRecordingStream(cameraStream);
 if(!recordingStream){
-setStatus("TELEMETRIE-AUFNAHME NICHT VERFÜGBAR");
+setStatus("TELEMETRIE-VIDEO NICHT VERFÜGBAR");
 return false;
 }
 const options=recordingMimeType
