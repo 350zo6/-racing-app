@@ -19,16 +19,41 @@ margin:0;width:100%;height:100%;overflow:hidden;background:#050505;color:#fff;
 font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display","Helvetica Neue",Arial,sans-serif;
 }
 body{touch-action:manipulation}
-#app{position:fixed;inset:0;background:#050505;overflow:hidden}
+#app{position:fixed;inset:0;background:#050505;overflow:hidden;transform:none;transform-origin:center center;}
+/* Safari on iPhone cannot reliably lock the browser viewport orientation.
+Rotate the complete Drive UI when the selected orientation differs from
+the current viewport. Camera, HUD, buttons and overlays stay together. */
+#app.orientationForce{
+left:50%;top:50%;right:auto;bottom:auto;inset:auto;
+width:100vh;height:100vw;
+}
+#app.orientationForceLandscape{transform:translate(-50%,-50%) rotate(90deg);}
+#app.orientationForcePortrait{transform:translate(-50%,-50%) rotate(-90deg);}
+/* Navigation is always presented as a portrait UI, even when Drive is in landscape. */
+#app.orientationForceLandscape #menu,
+#app.orientationForceLandscape #settingsPanel{
+left:50%;right:auto;top:50%;bottom:auto;
+width:100vw;height:100vh;
+inset:auto;
+transform:translate(-50%,-50%) rotate(-90deg);
+}
+#app.orientationForceLandscape #menu .panel{height:100vh;}
+#app.orientationForceLandscape #settingsPanel .settingsSheet{max-height:calc(100vh - 48px);}
+#app.navigationOpen #menu,
+#app.navigationOpen #settingsPanel{transform:translate(-50%,-50%) rotate(-90deg);}
+@media (orientation:landscape){
+#app.navigationOpen #menu,
+#app.navigationOpen #settingsPanel{
+left:50%;right:auto;top:50%;bottom:auto;
+width:100vw;height:100vh;
+inset:auto;
+transform:translate(-50%,-50%) rotate(-90deg);
+}
+}
 #camera{
 position:absolute;left:0;top:0;width:100%;height:100%;
 object-fit:cover;background:#111;z-index:1;
-transform:rotate(var(--preview-rotation,0deg));
-transform-origin:center center;
-transition:none;
-}
-#camera.orientationLocked{
-will-change:transform;
+transform:none;
 }
 #shade{
 position:absolute;left:0;top:0;width:100%;height:100%;z-index:2;
@@ -262,6 +287,24 @@ left:22px;transform:none;
 bottom:calc(79px + var(--safe-bottom));
 }
 }
+/* When Safari keeps the browser viewport portrait, the forced-landscape app
+has landscape dimensions internally, so mirror the normal landscape UI rules. */
+#app.orientationForceLandscape #header{padding:0 24px;height:82px}
+#app.orientationForceLandscape #logo{font-size:23px}
+#app.orientationForceLandscape #tagline{font-size:8px}
+#app.orientationForceLandscape #speedBox{position:absolute;right:82px;top:0}
+#app.orientationForceLandscape #speed{font-size:44px}
+#app.orientationForceLandscape #speedUnit{font-size:9px}
+#app.orientationForceLandscape #rec{left:24px;top:calc(68px + var(--safe-top))}
+#app.orientationForceLandscape #menuBtn{right:22px;top:calc(16px + var(--safe-top));width:42px;height:42px}
+#app.orientationForceLandscape #hud{left:auto;right:22px;top:auto;bottom:calc(18px + var(--safe-bottom));width:min(300px,31vw);grid-template-columns:1
+fr 1fr;gap:7px}
+#app.orientationForceLandscape .card{min-height:62px;padding:7px 9px;border-radius:11px}
+#app.orientationForceLandscape .label{font-size:7px;letter-spacing:1.7px}
+#app.orientationForceLandscape .value{margin-top:3px;font-size:13px;letter-spacing:-.2px}
+#app.orientationForceLandscape #controls{left:22px;right:auto;bottom:calc(18px + var(--safe-bottom));justify-content:flex-start}
+#app.orientationForceLandscape #start{width:min(330px,38vw);height:54px}
+#app.orientationForceLandscape #status{left:22px;transform:none;bottom:calc(79px + var(--safe-bottom))}
 </style>
 </head>
 <body>
@@ -347,6 +390,7 @@ G</b></div><div class="gmini"><span>ACCEL</span><b id="gAccel">0.00 G</b></div><
 </div>
 </div>
 <script>
+const app=document.getElementById("app");
 const camera=document.getElementById("camera");
 const placeholder=document.getElementById("placeholder");
 const startButton=document.getElementById("start");
@@ -386,6 +430,7 @@ let videoFps=Number(localStorage.getItem("dmMotionVideoFps") || "30");
 let videoOrientation=localStorage.getItem("dmMotionVideoOrientation") || "portrait";
 let previewStream=null;
 let driveModeOpen=true;
+let driveDisplayOrientation="portrait";
 const QUALITY_MAP={
 "1080p":{width:1920,height:1080},
 "2K":{width:2560,height:1440},
@@ -404,22 +449,19 @@ return recordingPortrait
 : {width:target.width,height:target.height};
 }
 function applyPreviewOrientation(){
-const angle=(screen.orientation && typeof screen.orientation.angle==="number")
-? screen.orientation.angle
-: (window.orientation || 0);
-const targetPortrait=videoOrientation==="portrait";
-let rotation=0;
-if(targetPortrait){
-if(angle===90) rotation=-90;
-else if(angle===270) rotation=90;
-else if(angle===180) rotation=180;
-}else{
-if(angle===0 || angle===180) rotation=90;
-else rotation=0;
-}
-camera.style.setProperty("--preview-rotation",rotation+"deg");
-camera.classList.toggle("orientationLocked",true);
-camera.dataset.orientation=videoOrientation;
+const viewportLandscape=window.innerWidth>window.innerHeight;
+const targetLandscape=driveDisplayOrientation==="landscape";
+const forceLandscape=targetLandscape && !viewportLandscape;
+const forcePortrait=!targetLandscape && viewportLandscape;
+app.classList.toggle("orientationForce",forceLandscape||forcePortrait);
+app.classList.toggle("orientationForceLandscape",forceLandscape);
+app.classList.toggle("orientationForcePortrait",forcePortrait);
+app.dataset.orientation=driveDisplayOrientation;
+// Never rotate the camera element separately. The whole Drive UI is rotated
+// as one surface, which prevents the camera from ending up in a different
+// orientation than the telemetry and controls.
+camera.style.setProperty("--preview-rotation","0deg");
+camera.classList.remove("orientationLocked");
 }
 async function lockScreenOrientation(){
 try{
@@ -433,6 +475,27 @@ applyPreviewOrientation();
 }
 function updatePreviewOrientation(){
 if(driveModeOpen) applyPreviewOrientation();
+}
+function openNavigation(){
+document.getElementById("menu").classList.add("open");
+app.classList.add("navigationOpen");
+}
+function closeNavigation(){
+document.getElementById("menu").classList.remove("open");
+app.classList.remove("navigationOpen");
+}
+function openSettingsPortrait(){
+if(running)return;
+updateSettingsUI();
+closeNavigation();
+settingsPanel.classList.add("open");
+document.body.classList.add("settingsOpen");
+}
+function closeSettingsPortrait(){
+settingsPanel.classList.remove("open");
+document.body.classList.remove("settingsOpen");
+driveDisplayOrientation=videoOrientation;
+applyPreviewOrientation();
 }
 function updateRecordingPerformance(){
 // 4K60 through a canvas is extremely demanding on iPhone Safari.
@@ -448,13 +511,8 @@ orientationButtons.forEach(btn=>btn.classList.toggle("selected",btn.dataset.orie
 settingsSummaryValue.textContent=`${videoQuality} / ${videoFps} FPS / ${videoOrientation==="portrait" ? "HOCHFORMAT" : "QUERFORMAT"}`;
 applyPreviewOrientation();
 }
-function openSettings(){
-if(running)return;
-updateSettingsUI();
-settingsPanel.classList.add("open");
-document.getElementById("menu").classList.remove("open");
-}
-function closeSettings(){settingsPanel.classList.remove("open")}
+function openSettings(){ openSettingsPortrait(); }
+function closeSettings(){ closeSettingsPortrait(); }
 qualityButtons.forEach(btn=>btn.addEventListener("click",()=>{
 videoQuality=btn.dataset.quality;
 localStorage.setItem("dmMotionVideoQuality",videoQuality);
@@ -471,7 +529,8 @@ videoOrientation=btn.dataset.orientation;
 localStorage.setItem("dmMotionVideoOrientation",videoOrientation);
 recordingPortrait=videoOrientation==="portrait";
 updateSettingsUI();
-lockScreenOrientation();
+// The Settings screen itself remains portrait. The selected orientation is applied
+// to the Drive screen only after Settings is closed.
 }));
 function setStatus(t){statusDisplay.textContent=t}
 function resetValues(){
@@ -951,6 +1010,8 @@ if(mediaRecorder && mediaRecorder.state!=="inactive"){
 mediaRecorder.stop();
 }
 resetValues();
+// Leaving a drive always returns the app UI to its normal portrait navigation mode.
+driveDisplayOrientation="portrait";
 applyPreviewOrientation();
 if(!recordedBlob)setStatus("VIDEO WIRD VERARBEITET...");
 else setStatus("KAMERA • BEREIT");
@@ -969,6 +1030,7 @@ recordedFileName="";
 recordingMimeType="";
 running=true;
 recordingPortrait=videoOrientation==="portrait";
+driveDisplayOrientation=videoOrientation;
 await lockScreenOrientation();
 startButton.textContent="STOP DRIVE";
 startButton.classList.add("stop");
@@ -1005,14 +1067,14 @@ setStatus("DM MOTION • RECORDING");
 });
 saveVideoButton.addEventListener("click",saveRecordedVideo);
 document.getElementById("menuBtn").onclick=()=>{
-document.getElementById("menu").classList.add("open");
+openNavigation();
 };
 document.getElementById("closeMenu").onclick=()=>{
-document.getElementById("menu").classList.remove("open");
+closeNavigation();
 };
 document.getElementById("menu").addEventListener("click",e=>{
 if(e.target===document.getElementById("menu")){
-document.getElementById("menu").classList.remove("open");
+closeNavigation();
 }
 });
 const menuItems=[...document.querySelectorAll(".item")];
@@ -1020,22 +1082,25 @@ const driveMenuItem=menuItems.find(item=>item.textContent.trim().startsWith("Dri
 if(driveMenuItem){
 driveMenuItem.addEventListener("click",async()=>{
 driveModeOpen=true;
-document.getElementById("menu").classList.remove("open");
+closeNavigation();
 await startCamera();
 applyPreviewOrientation();
 });
 }
 const settingsMenuItem=menuItems.find(item=>item.textContent.trim().startsWith("Settings"));
 if(settingsMenuItem){settingsMenuItem.addEventListener("click",openSettings)}
-closeSettingsButton.addEventListener("click",closeSettings);
+closeSettingsButton.addEventListener("click",closeSettingsPortrait);
 settingsPanel.addEventListener("click",e=>{
-if(e.target===settingsPanel)closeSettings();
+if(e.target===settingsPanel)closeSettingsPortrait();
 });
+driveDisplayOrientation=videoOrientation;
 updateSettingsUI();
 prepareSaveButton();
 resetValues();
 window.addEventListener("orientationchange",()=>{
-setTimeout(applyPreviewOrientation,80);
+setTimeout(()=>{
+if(!settingsPanel.classList.contains("open") && !document.getElementById("menu").classList.contains("open")) applyPreviewOrientation();
+},80);
 });
 window.addEventListener("resize",()=>{
 setTimeout(applyPreviewOrientation,80);
