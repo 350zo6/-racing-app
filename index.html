@@ -378,7 +378,6 @@ const QUALITY_MAP={
 let recordingPortrait=false;
 let recordingDrawCounter=0;
 let recordingDrawEvery=1;
-let recordingStartPortrait = false;
 function getRecordingDimensions(){
 const target=QUALITY_MAP[videoQuality] || QUALITY_MAP["1080p"];
 recordingPortrait=window.innerHeight > window.innerWidth;
@@ -535,119 +534,128 @@ let recordingCanvasStream=null;
 let recordingAnimationFrame=null;
 let recordingStartedAt=0;
 function drawRecordingOverlay(){
-if(!recordingCanvas || !recordingCanvasCtx) return;
+if(!recordingCanvas || !recordingCanvasCtx || !camera.videoWidth || !camera.videoHeight){
+recordingAnimationFrame=requestAnimationFrame(drawRecordingOverlay);
+return;
+}
 const ctx=recordingCanvasCtx;
 const w=recordingCanvas.width;
 const h=recordingCanvas.height;
-ctx.clearRect(0,0,w,h);
-const portrait=window.innerHeight>window.innerWidth;
-const sourceW=camera.videoWidth||camera.clientWidth||16;
-const sourceH=camera.videoHeight||camera.clientHeight||9;
-// Keep one stable recording canvas. Adapt the camera image to the current
-// phone orientation inside that canvas. The live camera element is untouched.
-function drawCameraLike(){
-const targetRatio=portrait ? 9/16 : 16/9;
+// On 4K/60 we intentionally update the heavy 4K canvas every second
+// animation frame. The captured stream remains configured for 60 FPS,
+// while duplicate frames keep playback smooth instead of stuttering badly.
+recordingDrawCounter++;
+if(recordingDrawCounter % recordingDrawEvery !== 0){
+recordingAnimationFrame=requestAnimationFrame(drawRecordingOverlay);
+return;
+}
+ctx.fillStyle="#000";
+ctx.fillRect(0,0,w,h);
+const sourceW=camera.videoWidth || w;
+const sourceH=camera.videoHeight || h;
+// Use the actual decoded camera orientation. This is important on iPhone:
+// the live <video> may already be correctly oriented even when Safari reports
+// a landscape pixel buffer. Rotate only when the source aspect ratio proves
+// that the frame really needs a 90° rotation for the requested output.
+function drawCover(targetW,targetH){
 const sourceRatio=sourceW/sourceH;
-// Safari may expose the sensor buffer rotated relative to the displayed
-// camera. Treat the source as portrait when its aspect differs strongly
-// from the current phone orientation.
-const sourcePortrait=sourceH>sourceW;
-const needsQuarterTurn=sourcePortrait!==portrait;
-if(needsQuarterTurn){
+const targetRatio=targetW/targetH;
+let sx=0,sy=0,sw=sourceW,sh=sourceH;
+if(sourceRatio>targetRatio){
+sw=sourceH*targetRatio;
+sx=(sourceW-sw)/2;
+}else if(sourceRatio<targetRatio){
+sh=sourceW/targetRatio;
+sy=(sourceH-sh)/2;
+}
+ctx.drawImage(camera,sx,sy,sw,sh,0,0,targetW,targetH);
+}
+// The live camera preview stays untouched. For the saved video we adapt the
+// camera buffer to the phone orientation, then fill the exact 9:16 or 16:9
+// recording canvas. This keeps the overlays inside the final video frame.
+if(recordingPortrait && sourceW>sourceH){
 ctx.save();
-if(portrait){
-// Landscape source -> portrait display.
 ctx.translate(0,h);
 ctx.rotate(Math.PI/2);
-drawCoverRotated(h,w,sourceW,sourceH);
-}else{
-// Portrait source -> landscape display.
+drawCover(h,w);
+ctx.restore();
+}else if(!recordingPortrait && sourceH>sourceW){
+ctx.save();
 ctx.translate(w,0);
 ctx.rotate(-Math.PI/2);
-drawCoverRotated(h,w,sourceW,sourceH);
-}
+drawCover(h,w);
+ctx.restore();
 }else{
-ctx.restore();
-drawCoverCurrent(w,h,sourceW,sourceH,targetRatio);
+drawCover(w,h);
 }
-}
-function drawCoverCurrent(tw,th,sw,sh,targetRatio){
-const sr=sw/sh;
-let sx=0,sy=0,cw=sw,ch=sh;
-if(sr>targetRatio){
-cw=sh*targetRatio;
-sx=(sw-cw)/2;
-}else if(sr<targetRatio){
-ch=sw/targetRatio;
-sy=(sh-ch)/2;
-}
-ctx.drawImage(camera,sx,sy,cw,ch,0,0,tw,th);
-}
-function drawCoverRotated(tw,th,sw,sh){
-// After a 90° turn the effective source ratio is inverted.
-const targetRatio=tw/th;
-const rotatedW=sh;
-const rotatedH=sw;
-const sr=rotatedW/rotatedH;
-let sx=0,sy=0,cw=sw,ch=sh;
-if(sr>targetRatio){
-const visibleRotatedW=sh*targetRatio;
-const visibleSourceH=visibleRotatedW;
-sy=(sh-visibleSourceH)/2;
-ch=visibleSourceH;
-}else if(sr<targetRatio){
-const visibleRotatedH=sw/targetRatio;
-const visibleSourceW=visibleRotatedH;
-sx=(sw-visibleSourceW)/2;
-cw=visibleSourceW;
-}
-ctx.drawImage(camera,sx,sy,cw,ch,0,0,tw,th);
-}
-drawCameraLike();
-// DM//MOTION
+const scale=Math.max(w,h)/1280;
+const pad=Math.max(24,Math.round(30*scale));
+const small=Math.max(14,Math.round(18*scale));
+const logoSize=Math.max(20,Math.round(30*scale));
+const speedSize=Math.max(42,Math.round(66*scale));
+const unitSize=Math.max(13,Math.round(18*scale));
+const dataSize=Math.max(16,Math.round(23*scale));
+const radius=Math.max(10,Math.round(14*scale));
+// Very subtle top-left branding.
 ctx.save();
-ctx.font=`700 ${Math.max(28,Math.round(Math.min(w,h)*0.040))}px Arial`;
-ctx.fillStyle="#fff";
+ctx.font=`800 ${logoSize}px Arial, sans-serif`;
 ctx.textBaseline="top";
-ctx.fillText("DM//MOTION",Math.round(w*0.035),Math.round(h*0.035));
+ctx.fillStyle="rgba(255,255,255,.96)";
+ctx.fillText("DM",pad,pad);
+const dmWidth=ctx.measureText("DM").width;
+ctx.fillStyle="rgba(230,30,40,.98)";
+ctx.fillText("//",pad+dmWidth+Math.round(3*scale),pad);
+const slashWidth=ctx.measureText("//").width;
+ctx.fillStyle="rgba(255,255,255,.96)";
+ctx.fillText("MOTION",pad+dmWidth+slashWidth+Math.round(7*scale),pad);
+// Keep the recorded-video branding clean: DM//MOTION only.
 ctx.restore();
-// Speed
+// Speed top-right.
+const speed=String(speedDisplay.textContent||"0");
 ctx.save();
 ctx.textAlign="right";
 ctx.textBaseline="top";
-ctx.fillStyle="#fff";
-ctx.font=`700 ${Math.max(42,Math.round(Math.min(w,h)*0.060))}px Arial`;
-ctx.fillText(`${Math.round(currentSpeed||0)}`,w-Math.round(w*0.035),Math.round(h*0.030));
-ctx.font=`600 ${Math.max(18,Math.round(Math.min(w,h)*0.024))}px Arial`;
-ctx.fillText("KM/H",w-Math.round(w*0.035),Math.round(h*0.105));
+ctx.font=`800 ${speedSize}px Arial, sans-serif`;
+ctx.fillStyle="rgba(255,255,255,.97)";
+ctx.fillText(speed,w-pad,pad);
+ctx.font=`700 ${unitSize}px Arial, sans-serif`;
+ctx.fillStyle="rgba(255,255,255,.72)";
+ctx.fillText("KM/H",w-pad,pad+speedSize+Math.round(4*scale));
 ctx.restore();
-// Telemetry box
-const boxW=Math.round(w*0.315);
-const boxH=Math.round(h*0.105);
-const bx=w-boxW-Math.round(w*0.035);
-const by=h-boxH-Math.round(h*0.035);
+// Bottom-right telemetry: three driving G values + elapsed time.
+const lateralText=String(gLateralDisplay.textContent||"0.00 G");
+const brakeText=String(gBrakeDisplay.textContent||"0.00 G");
+const accelText=String(gAccelDisplay.textContent||"0.00 G");
+const timeText=String(timeDisplay.textContent||"00:00");
+const boxPad=Math.max(16,Math.round(18*scale));
+const boxW=Math.max(190,Math.round(225*scale));
+const line=Math.max(20,Math.round(23*scale));
+const textTop=Math.max(7,Math.round(8*scale));
+const timeSize=Math.max(19,Math.round(dataSize*1.18));
+const timeVisualH=Math.max(20,Math.round(timeSize*.90));
+const boxH=textTop*2+(line*3)+timeVisualH;
+const boxX=w-boxPad-boxW;
+const boxY=h-boxPad-boxH;
 ctx.save();
-ctx.fillStyle="rgba(0,0,0,.28)";
-ctx.strokeStyle="#fff";
-ctx.lineWidth=Math.max(2,Math.round(Math.min(w,h)*0.0025));
-roundRect(bx,by,boxW,boxH,Math.round(Math.min(w,h)*0.018));
+ctx.fillStyle="rgba(0,0,0,.18)";
+ctx.strokeStyle="rgba(255,255,255,.20)";
+ctx.lineWidth=Math.max(1,Math.round(scale));
+ctx.beginPath();
+ctx.roundRect(boxX,boxY,boxW,boxH,radius);
 ctx.fill();
 ctx.stroke();
-ctx.fillStyle="#fff";
 ctx.textAlign="left";
 ctx.textBaseline="top";
-ctx.font=`700 ${Math.max(15,Math.round(Math.min(w,h)*0.019))}px Arial`;
-const tx=bx+Math.round(boxW*0.055);
-let ty=by+Math.round(boxH*0.10);
-ctx.fillText(`LATERAL ${Math.abs(lateralG||0).toFixed(2)} G`,tx,ty);
-ty+=Math.round(boxH*0.225);
-ctx.fillText(`BRAKE ${Math.abs(brakeG||0).toFixed(2)} G`,tx,ty);
-ty+=Math.round(boxH*0.225);
-ctx.fillText(`ACCEL ${Math.abs(accelG||0).toFixed(2)} G`,tx,ty);
-ty+=Math.round(boxH*0.225);
-ctx.fillText(formatTime(elapsedTime||0),tx,ty);
+ctx.font=`800 ${dataSize}px Arial, sans-serif`;
+ctx.fillStyle="rgba(255,255,255,.96)";
+const textX=boxX+Math.round(12*scale);
+ctx.fillText(`LATERAL ${lateralText}`,textX,boxY+textTop);
+ctx.fillText(`BRAKE ${brakeText}`,textX,boxY+textTop+line);
+ctx.fillText(`ACCEL ${accelText}`,textX,boxY+textTop+(line*2));
+ctx.font=`800 ${timeSize}px Arial, sans-serif`;
+ctx.fillStyle="rgba(255,255,255,.96)";
+ctx.fillText(timeText,textX,boxY+textTop+(line*3));
 ctx.restore();
-// Keep drawing continuously so orientation changes are reflected while recording.
 recordingAnimationFrame=requestAnimationFrame(drawRecordingOverlay);
 }
 function createRecordingStream(cameraStream){
@@ -686,7 +694,6 @@ recordingCanvas=null;
 recordingCanvasCtx=null;
 }
 async function startRecording(cameraStream){
-recordingStartPortrait = window.innerHeight > window.innerWidth;
 if(!window.MediaRecorder){
 setStatus("AUFNAHME NICHT VERFÜGBAR");
 return false;
