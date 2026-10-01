@@ -561,18 +561,36 @@ ctx.fillStyle="#000";
 ctx.fillRect(0,0,w,h);
 const sourceW=camera.videoWidth || w;
 const sourceH=camera.videoHeight || h;
-// The camera stream is requested as a stable 16:9 landscape source.
-// In portrait we physically rotate those frames into the 9:16 canvas.
-// This avoids relying on Safari's inconsistent MP4 rotation metadata.
-if(recordingPortrait){
+// Use the actual decoded camera orientation. This is important on iPhone:
+// the live <video> may already be correctly oriented even when Safari reports
+// a landscape pixel buffer. Rotate only when the source aspect ratio proves
+// that the frame really needs a 90° rotation for the requested output.
+function drawContain(targetW,targetH){
+const sourceRatio=sourceW/sourceH;
+const targetRatio=targetW/targetH;
+let dw=targetW,dh=targetH;
+if(sourceRatio>targetRatio){dh=targetW/sourceRatio;}
+else if(sourceRatio<targetRatio){dw=targetH*sourceRatio;}
+const dx=(targetW-dw)/2;
+const dy=(targetH-dh)/2;
+ctx.drawImage(camera,0,0,sourceW,sourceH,dx,dy,dw,dh);
+}
+const sourceIsLandscape=sourceW>sourceH;
+const sourceIsPortrait=sourceH>sourceW;
+if(recordingPortrait && sourceIsLandscape){
 ctx.save();
 ctx.translate(0,h);
 ctx.rotate(Math.PI/2);
-// After rotation, the drawing area is h x w (16:9).
-ctx.drawImage(camera,0,0,sourceW,sourceH,0,0,h,w);
+drawContain(h,w);
+ctx.restore();
+}else if(!recordingPortrait && sourceIsPortrait){
+ctx.save();
+ctx.translate(w,0);
+ctx.rotate(-Math.PI/2);
+drawContain(h,w);
 ctx.restore();
 }else{
-ctx.drawImage(camera,0,0,sourceW,sourceH,0,0,w,h);
+drawContain(w,h);
 }
 const scale=Math.max(w,h)/1280;
 const pad=Math.max(24,Math.round(30*scale));
@@ -786,15 +804,12 @@ setStatus("VIDEO GESPEICHERT");
 async function startCamera(){
 try{
 const target=QUALITY_MAP[videoQuality] || QUALITY_MAP["1080p"];
-// iOS Safari can report the physical sensor buffer in the opposite
-// orientation from the image actually shown in the <video>. In particular,
-// portrait dimension requests can produce a landscape track on iOS 26/27.
-// We therefore request the stable landscape 16:9 camera stream and rotate it
-// ourselves for portrait preview/recording. The OUTPUT is still true 9:16.
+// Keep the camera request exactly like the stable versions: no forced
+// aspectRatio and no manual rotation of the live <video> preview.
+// Safari/iPhone handles the live camera orientation itself.
 const stream=await navigator.mediaDevices.getUserMedia({
 video:{
 facingMode:{exact:"environment"},
-aspectRatio:{ideal:16/9},
 width:{ideal:target.width},
 height:{ideal:target.height},
 frameRate:{ideal:videoFps,max:videoFps}
@@ -809,8 +824,21 @@ await camera.play().catch(()=>{});
 return true;
 }catch(error){
 console.log("Camera:",error);
+try{
+const stream=await navigator.mediaDevices.getUserMedia({
+video:{facingMode:"environment"},audio:true
+});
+camera.srcObject=stream;
+camera.muted=true;
+camera.playsInline=true;
+placeholder.style.display="none";
+await camera.play().catch(()=>{});
+return true;
+}catch(fallbackError){
+console.log("Camera fallback:",fallbackError);
 setStatus("KAMERA NICHT FREIGEGEBEN");
 return false;
+}
 }
 }
 function startGPS(){
