@@ -373,6 +373,25 @@ const QUALITY_MAP={
 "2K":{width:2560,height:1440},
 "4K":{width:3840,height:2160}
 };
+// Orientation is detected automatically when recording starts.
+// The user does not need to choose portrait/landscape in Settings.
+let recordingPortrait=false;
+let recordingDrawCounter=0;
+let recordingDrawEvery=1;
+function getRecordingDimensions(){
+const target=QUALITY_MAP[videoQuality] || QUALITY_MAP["1080p"];
+recordingPortrait=window.innerHeight > window.innerWidth;
+return recordingPortrait
+? {width:target.height,height:target.width}
+: {width:target.width,height:target.height};
+}
+function updateRecordingPerformance(){
+// 4K60 through a canvas is extremely demanding on iPhone Safari.
+// Keep 4K/60 available in Settings, but render the expensive 4K canvas
+// at 30 unique frames/s so it does not collapse into very low frame rates.
+recordingDrawEvery=(videoQuality==="4K" && videoFps===60) ? 2 : 1;
+recordingDrawCounter=0;
+}
 function updateSettingsUI(){
 qualityButtons.forEach(btn=>btn.classList.toggle("selected",btn.dataset.quality===videoQuality));
 fpsButtons.forEach(btn=>btn.classList.toggle("selected",Number(btn.dataset.fps)===videoFps));
@@ -522,20 +541,50 @@ return;
 const ctx=recordingCanvasCtx;
 const w=recordingCanvas.width;
 const h=recordingCanvas.height;
+// On 4K/60 we intentionally update the heavy 4K canvas every second
+// animation frame. The captured stream remains configured for 60 FPS,
+// while duplicate frames keep playback smooth instead of stuttering badly.
+recordingDrawCounter++;
+if(recordingDrawCounter % recordingDrawEvery !== 0){
+recordingAnimationFrame=requestAnimationFrame(drawRecordingOverlay);
+return;
+}
 ctx.clearRect(0,0,w,h);
 const sourceW=camera.videoWidth || w;
 const sourceH=camera.videoHeight || h;
+function drawCover(targetW,targetH){
 const sourceRatio=sourceW/sourceH;
-const targetRatio=w/h;
+const targetRatio=targetW/targetH;
 let sx=0,sy=0,sw=sourceW,sh=sourceH;
 if(sourceRatio>targetRatio){
+sh=sourceH;
 sw=sourceH*targetRatio;
 sx=(sourceW-sw)/2;
 }else if(sourceRatio<targetRatio){
+sw=sourceW;
 sh=sourceW/targetRatio;
 sy=(sourceH-sh)/2;
 }
-ctx.drawImage(camera,sx,sy,sw,sh,0,0,w,h);
+ctx.drawImage(camera,sx,sy,sw,sh,0,0,targetW,targetH);
+}
+// Safari may expose the camera stream as landscape even while the phone
+// is physically portrait. Rotate that source by 90° so the saved file
+// is genuinely portrait instead of a landscape video with black bars.
+if(recordingPortrait && sourceW>sourceH){
+ctx.save();
+ctx.translate(w,0);
+ctx.rotate(Math.PI/2);
+drawCover(h,w);
+ctx.restore();
+}else if(!recordingPortrait && sourceH>sourceW){
+ctx.save();
+ctx.translate(0,h);
+ctx.rotate(-Math.PI/2);
+drawCover(h,w);
+ctx.restore();
+}else{
+drawCover(w,h);
+}
 const scale=Math.max(w,h)/1280;
 const pad=Math.max(24,Math.round(30*scale));
 const small=Math.max(14,Math.round(18*scale));
@@ -613,10 +662,11 @@ if(!HTMLCanvasElement.prototype.captureStream){
 return null;
 }
 recordingCanvas=document.createElement("canvas");
-const target=QUALITY_MAP[videoQuality] || QUALITY_MAP["1080p"];
-recordingCanvas.width=target.width;
-recordingCanvas.height=target.height;
-recordingCanvasCtx=recordingCanvas.getContext("2d",{alpha:false});
+const dimensions=getRecordingDimensions();
+recordingCanvas.width=dimensions.width;
+recordingCanvas.height=dimensions.height;
+recordingCanvasCtx=recordingCanvas.getContext("2d",{alpha:false,desynchronized:true});
+updateRecordingPerformance();
 recordingCanvasStream=recordingCanvas.captureStream(videoFps);
 const audioTracks=cameraStream.getAudioTracks();
 if(audioTracks.length){
@@ -730,11 +780,12 @@ setStatus("VIDEO GESPEICHERT");
 async function startCamera(){
 try{
 const target=QUALITY_MAP[videoQuality] || QUALITY_MAP["1080p"];
+const portrait=window.innerHeight > window.innerWidth;
 const stream=await navigator.mediaDevices.getUserMedia({
 video:{
 facingMode:{exact:"environment"},
-width:{ideal:target.width},
-height:{ideal:target.height},
+width:{ideal:portrait ? target.height : target.width},
+height:{ideal:portrait ? target.width : target.height},
 frameRate:{ideal:videoFps,max:videoFps}
 },
 audio:true
