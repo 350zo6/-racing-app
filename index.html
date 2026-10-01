@@ -385,6 +385,26 @@ return recordingPortrait
 ? {width:target.height,height:target.width}
 : {width:target.width,height:target.height};
 }
+function getCurrentRecordingDimensions(){
+const target=QUALITY_MAP[videoQuality] || QUALITY_MAP["1080p"];
+const portrait=window.innerHeight > window.innerWidth;
+return portrait
+? {width:target.height,height:target.width,portrait:true}
+: {width:target.width,height:target.height,portrait:false};
+}
+function syncRecordingOrientation(){
+if(!recordingCanvas || !recordingCanvasCtx) return;
+const next=getCurrentRecordingDimensions();
+if(next.portrait===recordingPortrait &&
+recordingCanvas.width===next.width &&
+recordingCanvas.height===next.height) return;
+recordingPortrait=next.portrait;
+// Resizing a canvas clears it. Do this only when the real phone orientation
+// changes, then the very next animation frame redraws the complete frame.
+recordingCanvas.width=next.width;
+recordingCanvas.height=next.height;
+recordingCanvasCtx=recordingCanvas.getContext("2d",{alpha:false});
+}
 function updateRecordingPerformance(){
 // 4K60 through a canvas is extremely demanding on iPhone Safari.
 // Keep 4K/60 available in Settings, but render the expensive 4K canvas
@@ -538,6 +558,7 @@ if(!recordingCanvas || !recordingCanvasCtx || !camera.videoWidth || !camera.vide
 recordingAnimationFrame=requestAnimationFrame(drawRecordingOverlay);
 return;
 }
+syncRecordingOrientation();
 const ctx=recordingCanvasCtx;
 const w=recordingCanvas.width;
 const h=recordingCanvas.height;
@@ -957,33 +978,6 @@ if(e.target===settingsPanel)closeSettings();
 updateSettingsUI();
 prepareSaveButton();
 resetValues();
-</script>
-<script>
-(function(){
-let lastOrientation = window.innerHeight > window.innerWidth ? "HOCHFORMAT" : "QUERFORMAT";
-const indicator = document.createElement("div");
-indicator.id = "dmOrientationTest";
-indicator.style.cssText =
-"position:fixed;left:50%;top:12px;transform:translateX(-50%);" +
-"z-index:99999;padding:7px 12px;border-radius:10px;" +
-"background:rgba(0,0,0,.75);color:#fff;font:700 13px Arial;" +
-"letter-spacing:.4px;pointer-events:none;display:none;";
-document.body.appendChild(indicator);
-function updateOrientationTest(){
-const current = window.innerHeight > window.innerWidth ? "HOCHFORMAT" : "QUERFORMAT";
-if(current !== lastOrientation){
-lastOrientation = current;
-indicator.textContent = "AUSRICHTUNG: " + current;
-indicator.style.display = "block";
-clearTimeout(updateOrientationTest.hideTimer);
-updateOrientationTest.hideTimer = setTimeout(()=>{
-indicator.style.display = "none";
-},1800);
-}
-}
-window.addEventListener("orientationchange", updateOrientationTest, {passive:true});
-window.addEventListener("resize", updateOrientationTest, {passive:true});
-})();
 </script>
 </body>
 </html>
