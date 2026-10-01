@@ -543,21 +543,27 @@ const w=recordingCanvas.width;
 const h=recordingCanvas.height;
 // On 4K/60 we intentionally update the heavy 4K canvas every second
 // animation frame. The captured stream remains configured for 60 FPS,
-// while duplicate frames keep playback smooth instead of stuttering badly.
+// while duplicate frames keep playback smoother on iPhone Safari.
 recordingDrawCounter++;
 if(recordingDrawCounter % recordingDrawEvery !== 0){
 recordingAnimationFrame=requestAnimationFrame(drawRecordingOverlay);
 return;
 }
-ctx.fillStyle="#000";
-ctx.fillRect(0,0,w,h);
-const sourceW=camera.videoWidth || w;
-const sourceH=camera.videoHeight || h;
-// Use the actual decoded camera orientation. This is important on iPhone:
-// the live <video> may already be correctly oriented even when Safari reports
-// a landscape pixel buffer. Rotate only when the source aspect ratio proves
-// that the frame really needs a 90° rotation for the requested output.
-function drawCover(targetW,targetH){
+const sourceW=camera.videoWidth;
+const sourceH=camera.videoHeight;
+if(!sourceW || !sourceH){
+recordingAnimationFrame=requestAnimationFrame(drawRecordingOverlay);
+return;
+}
+// IMPORTANT: Keep one fixed output canvas for the whole recording. A video
+// file cannot change from 9:16 to 16:9 halfway through. When the user turns
+// the iPhone during recording, we only rotate/fit the current camera frame
+// inside that fixed canvas. This prevents the canvas from going black during
+// Safari's temporary video-dimension/orientation switch.
+const devicePortrait=window.innerHeight > window.innerWidth;
+const sourcePortrait=sourceH > sourceW;
+const needQuarterTurn=(devicePortrait !== sourcePortrait);
+function drawCoverFromSource(targetW,targetH){
 const sourceRatio=sourceW/sourceH;
 const targetRatio=targetW/targetH;
 let sx=0,sy=0,sw=sourceW,sh=sourceH;
@@ -570,23 +576,36 @@ sy=(sourceH-sh)/2;
 }
 ctx.drawImage(camera,sx,sy,sw,sh,0,0,targetW,targetH);
 }
-// The live camera preview stays untouched. For the saved video we adapt the
-// camera buffer to the phone orientation, then fill the exact 9:16 or 16:9
-// recording canvas. This keeps the overlays inside the final video frame.
-if(recordingPortrait && sourceW>sourceH){
+// Do NOT clear the canvas before drawing. During an iPhone rotation Safari
+// can briefly reconfigure the camera buffer. If drawImage fails for one frame,
+// leaving the previous frame on the canvas is much safer than recording a
+// black frame. The next valid frame replaces it completely.
+let cameraFrameDrawn=false;
+try{
+if(needQuarterTurn){
 ctx.save();
+if(devicePortrait){
+// Landscape source -> portrait display.
 ctx.translate(0,h);
 ctx.rotate(Math.PI/2);
-drawCover(h,w);
-ctx.restore();
-}else if(!recordingPortrait && sourceH>sourceW){
-ctx.save();
+drawCoverFromSource(h,w);
+}else{
+// Portrait source -> landscape display.
 ctx.translate(w,0);
 ctx.rotate(-Math.PI/2);
-drawCover(h,w);
-ctx.restore();
+drawCoverFromSource(h,w);
+}
 }else{
-drawCover(w,h);
+ctx.restore();
+drawCoverFromSource(w,h);
+}
+cameraFrameDrawn=true;
+}catch(error){
+// Keep the last successfully drawn camera frame during the orientation switch.
+}
+if(!cameraFrameDrawn){
+recordingAnimationFrame=requestAnimationFrame(drawRecordingOverlay);
+return;
 }
 const scale=Math.max(w,h)/1280;
 const pad=Math.max(24,Math.round(30*scale));
