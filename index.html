@@ -154,6 +154,49 @@ border-bottom:1px solid rgba(255,255,255,.08);
 color:#fff;font-size:15px;text-align:left;
 }
 .item span{color:#666;font-size:20px}
+#settingsPanel{
+position:absolute;inset:0;z-index:120;display:none;
+background:rgba(0,0,0,.76);
+backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);
+}
+#settingsPanel.open{display:block}
+.settingsSheet{
+position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);
+width:min(430px,calc(100vw - 32px));max-height:calc(100vh - 48px);
+overflow:auto;border:1px solid rgba(255,255,255,.12);
+border-radius:22px;background:rgba(13,13,14,.98);
+padding:22px 20px calc(20px + var(--safe-bottom));
+box-shadow:0 25px 80px rgba(0,0,0,.55);
+}
+.settingsHead{display:flex;justify-content:space-between;align-items:center;margin-bottom:24px}
+.settingsTitle{font-size:25px;font-weight:900;letter-spacing:-.6px}
+.settingsClose{border:0;background:none;color:#fff;font-size:30px;line-height:1;padding:0 4px}
+.settingGroup{margin-top:22px}
+.settingLabel{font-size:9px;letter-spacing:2.2px;color:#888;font-weight:850;margin-bottom:10px}
+.settingOptions{display:grid;gap:8px}
+.qualityOptions{grid-template-columns:repeat(3,1fr)}
+.fpsOptions{grid-template-columns:repeat(2,1fr)}
+.settingOption{
+min-height:54px;border:1px solid rgba(255,255,255,.14);border-radius:13px;
+background:rgba(255,255,255,.035);color:#fff;font:800 13px -apple-system,BlinkMacSystemFont,"SF Pro Display","Helvetica
+Neue",Arial,sans-serif;
+letter-spacing:.5px;
+}
+.settingOption.selected{
+background:rgba(255,32,40,.16);border-color:rgba(255,32,40,.9);
+box-shadow:0 0 0 1px rgba(255,32,40,.22) inset;color:#fff;
+}
+.settingHint{margin-top:10px;color:#666;font-size:9px;line-height:1.45}
+.settingsSummary{
+margin-top:24px;padding:13px 14px;border:1px solid rgba(255,255,255,.10);
+border-radius:12px;background:rgba(255,255,255,.025);
+display:flex;justify-content:space-between;gap:12px;align-items:center;
+}
+.settingsSummary span:first-child{font-size:8px;letter-spacing:1.8px;color:#777;font-weight:850}
+#settingsSummaryValue{font-size:11px;font-weight:850}
+@media (max-width:600px){
+.settingsSheet{width:calc(100vw - 24px);padding-left:16px;padding-right:16px}
+}
 @media (max-width:600px) and (orientation:portrait){
 #hud{grid-template-columns:repeat(2,1fr)}
 #speed{font-size:45px}
@@ -259,6 +302,35 @@ G</b></div><div class="gmini"><span>ACCEL</span><b id="gAccel">0.00 G</b></div><
 <button class="item">Settings <span>›</span></button>
 </div>
 </div>
+<div id="settingsPanel">
+<div class="settingsSheet">
+<div class="settingsHead">
+<div class="settingsTitle">Video Settings</div>
+<button class="settingsClose" id="closeSettings" aria-label="Settings schließen">×</button>
+</div>
+<div class="settingGroup">
+<div class="settingLabel">AUFLÖSUNG</div>
+<div class="settingOptions qualityOptions">
+<button class="settingOption" data-quality="1080p">1080p</button>
+<button class="settingOption" data-quality="2K">2K</button>
+<button class="settingOption" data-quality="4K">4K</button>
+</div>
+<div class="settingHint">Die gewählte Auflösung wird für die nächste Aufnahme verwendet.</div>
+</div>
+<div class="settingGroup">
+<div class="settingLabel">BILDRATE</div>
+<div class="settingOptions fpsOptions">
+<button class="settingOption" data-fps="30">30 FPS</button>
+<button class="settingOption" data-fps="60">60 FPS</button>
+</div>
+<div class="settingHint">Die gewählte Bildrate wird für die nächste Aufnahme verwendet.</div>
+</div>
+<div class="settingsSummary">
+<span>AKTUELLE AUFNAHME</span>
+<strong id="settingsSummaryValue">1080p / 30 FPS</strong>
+</div>
+</div>
+</div>
 </div>
 <script>
 const camera=document.getElementById("camera");
@@ -289,6 +361,40 @@ let recordedBlob=null;
 let recordedFileName="";
 let recordingMimeType="";
 const saveVideoButton=document.getElementById("saveVideo");
+const settingsPanel=document.getElementById("settingsPanel");
+const closeSettingsButton=document.getElementById("closeSettings");
+const settingsSummaryValue=document.getElementById("settingsSummaryValue");
+const qualityButtons=[...document.querySelectorAll("[data-quality]")];
+const fpsButtons=[...document.querySelectorAll("[data-fps]")];
+let videoQuality=localStorage.getItem("dmMotionVideoQuality") || "1080p";
+let videoFps=Number(localStorage.getItem("dmMotionVideoFps") || "30");
+const QUALITY_MAP={
+"1080p":{width:1920,height:1080},
+"2K":{width:2560,height:1440},
+"4K":{width:3840,height:2160}
+};
+function updateSettingsUI(){
+qualityButtons.forEach(btn=>btn.classList.toggle("selected",btn.dataset.quality===videoQuality));
+fpsButtons.forEach(btn=>btn.classList.toggle("selected",Number(btn.dataset.fps)===videoFps));
+settingsSummaryValue.textContent=`${videoQuality} / ${videoFps} FPS`;
+}
+function openSettings(){
+if(running)return;
+updateSettingsUI();
+settingsPanel.classList.add("open");
+document.getElementById("menu").classList.remove("open");
+}
+function closeSettings(){settingsPanel.classList.remove("open")}
+qualityButtons.forEach(btn=>btn.addEventListener("click",()=>{
+videoQuality=btn.dataset.quality;
+localStorage.setItem("dmMotionVideoQuality",videoQuality);
+updateSettingsUI();
+}));
+fpsButtons.forEach(btn=>btn.addEventListener("click",()=>{
+videoFps=Number(btn.dataset.fps);
+localStorage.setItem("dmMotionVideoFps",String(videoFps));
+updateSettingsUI();
+}));
 function setStatus(t){statusDisplay.textContent=t}
 function resetValues(){
 speedDisplay.textContent="0";
@@ -417,7 +523,19 @@ const ctx=recordingCanvasCtx;
 const w=recordingCanvas.width;
 const h=recordingCanvas.height;
 ctx.clearRect(0,0,w,h);
-ctx.drawImage(camera,0,0,w,h);
+const sourceW=camera.videoWidth || w;
+const sourceH=camera.videoHeight || h;
+const sourceRatio=sourceW/sourceH;
+const targetRatio=w/h;
+let sx=0,sy=0,sw=sourceW,sh=sourceH;
+if(sourceRatio>targetRatio){
+sw=sourceH*targetRatio;
+sx=(sourceW-sw)/2;
+}else if(sourceRatio<targetRatio){
+sh=sourceW/targetRatio;
+sy=(sourceH-sh)/2;
+}
+ctx.drawImage(camera,sx,sy,sw,sh,0,0,w,h);
 const scale=Math.max(w,h)/1280;
 const pad=Math.max(24,Math.round(30*scale));
 const small=Math.max(14,Math.round(18*scale));
@@ -495,10 +613,11 @@ if(!HTMLCanvasElement.prototype.captureStream){
 return null;
 }
 recordingCanvas=document.createElement("canvas");
-recordingCanvas.width=camera.videoWidth || 1280;
-recordingCanvas.height=camera.videoHeight || 720;
+const target=QUALITY_MAP[videoQuality] || QUALITY_MAP["1080p"];
+recordingCanvas.width=target.width;
+recordingCanvas.height=target.height;
 recordingCanvasCtx=recordingCanvas.getContext("2d",{alpha:false});
-recordingCanvasStream=recordingCanvas.captureStream(30);
+recordingCanvasStream=recordingCanvas.captureStream(videoFps);
 const audioTracks=cameraStream.getAudioTracks();
 if(audioTracks.length){
 recordingCanvasStream.addTrack(audioTracks[0]);
@@ -610,8 +729,14 @@ setStatus("VIDEO GESPEICHERT");
 }
 async function startCamera(){
 try{
+const target=QUALITY_MAP[videoQuality] || QUALITY_MAP["1080p"];
 const stream=await navigator.mediaDevices.getUserMedia({
-video:{facingMode:{exact:"environment"}},
+video:{
+facingMode:{exact:"environment"},
+width:{ideal:target.width},
+height:{ideal:target.height},
+frameRate:{ideal:videoFps,max:videoFps}
+},
 audio:true
 });
 camera.srcObject=stream;
@@ -667,8 +792,8 @@ mediaRecorder.stop();
 }
 const stream=camera.srcObject;
 if(stream){
-}
 setTimeout(()=>stream.getTracks().forEach(track=>track.stop()),120);
+}
 camera.srcObject=null;
 placeholder.style.display="flex";
 resetValues();
@@ -735,6 +860,14 @@ if(e.target===document.getElementById("menu")){
 document.getElementById("menu").classList.remove("open");
 }
 });
+const menuItems=[...document.querySelectorAll(".item")];
+const settingsMenuItem=menuItems.find(item=>item.textContent.trim().startsWith("Settings"));
+if(settingsMenuItem){settingsMenuItem.addEventListener("click",openSettings)}
+closeSettingsButton.addEventListener("click",closeSettings);
+settingsPanel.addEventListener("click",e=>{
+if(e.target===settingsPanel)closeSettings();
+});
+updateSettingsUI();
 prepareSaveButton();
 resetValues();
 </script>
