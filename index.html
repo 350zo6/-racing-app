@@ -23,6 +23,12 @@ body{touch-action:manipulation}
 #camera{
 position:absolute;left:0;top:0;width:100%;height:100%;
 object-fit:cover;background:#111;z-index:1;
+transform:rotate(var(--preview-rotation,0deg));
+transform-origin:center center;
+transition:none;
+}
+#camera.orientationLocked{
+will-change:transform;
 }
 #shade{
 position:absolute;left:0;top:0;width:100%;height:100%;z-index:2;
@@ -325,6 +331,14 @@ G</b></div><div class="gmini"><span>ACCEL</span><b id="gAccel">0.00 G</b></div><
 </div>
 </div>
 <div class="settingHint">Die gewählte Bildrate wird für die nächste Aufnahme verwendet.</div>
+<div class="settingGroup">
+<div class="settingLabel">VIDEO-AUSRICHTUNG</div>
+<div class="settingOptions fpsOptions">
+<button class="settingOption" data-orientation="portrait">HOCHFORMAT</button>
+<button class="settingOption" data-orientation="landscape">QUERFORMAT</button>
+</div>
+<div class="settingHint">Die Ausrichtung wird vor der Aufnahme festgelegt und bleibt während der gesamten Aufnahme unverändert.</div>
+</div>
 <div class="settingsSummary">
 <span>AKTUELLE AUFNAHME</span>
 <strong id="settingsSummaryValue">1080p / 30 FPS</strong>
@@ -360,35 +374,65 @@ let recordedChunks=[];
 let recordedBlob=null;
 let recordedFileName="";
 let recordingMimeType="";
-let recordingSegments=[];
-let orientationWatcher=null;
-let segmentOrientation=null;
-let segmentSwitching=false;
-let segmentStartedAt=0;
 const saveVideoButton=document.getElementById("saveVideo");
 const settingsPanel=document.getElementById("settingsPanel");
 const closeSettingsButton=document.getElementById("closeSettings");
 const settingsSummaryValue=document.getElementById("settingsSummaryValue");
 const qualityButtons=[...document.querySelectorAll("[data-quality]")];
 const fpsButtons=[...document.querySelectorAll("[data-fps]")];
+const orientationButtons=[...document.querySelectorAll("[data-orientation]")];
 let videoQuality=localStorage.getItem("dmMotionVideoQuality") || "1080p";
 let videoFps=Number(localStorage.getItem("dmMotionVideoFps") || "30");
+let videoOrientation=localStorage.getItem("dmMotionVideoOrientation") || "portrait";
+let previewStream=null;
+let driveModeOpen=true;
 const QUALITY_MAP={
 "1080p":{width:1920,height:1080},
 "2K":{width:2560,height:1440},
 "4K":{width:3840,height:2160}
 };
-// Orientation is detected automatically when recording starts.
-// The user does not need to choose portrait/landscape in Settings.
-let recordingPortrait=false;
+// The recording orientation is selected in Settings before the drive.
+// It never changes while recording, even if the phone is physically rotated.
+let recordingPortrait=videoOrientation==="portrait";
 let recordingDrawCounter=0;
 let recordingDrawEvery=1;
 function getRecordingDimensions(){
 const target=QUALITY_MAP[videoQuality] || QUALITY_MAP["1080p"];
-recordingPortrait=window.innerHeight > window.innerWidth;
+recordingPortrait=videoOrientation==="portrait";
 return recordingPortrait
 ? {width:target.height,height:target.width}
 : {width:target.width,height:target.height};
+}
+function applyPreviewOrientation(){
+const angle=(screen.orientation && typeof screen.orientation.angle==="number")
+? screen.orientation.angle
+: (window.orientation || 0);
+const targetPortrait=videoOrientation==="portrait";
+let rotation=0;
+if(targetPortrait){
+if(angle===90) rotation=-90;
+else if(angle===270) rotation=90;
+else if(angle===180) rotation=180;
+}else{
+if(angle===0 || angle===180) rotation=90;
+else rotation=0;
+}
+camera.style.setProperty("--preview-rotation",rotation+"deg");
+camera.classList.toggle("orientationLocked",true);
+camera.dataset.orientation=videoOrientation;
+}
+async function lockScreenOrientation(){
+try{
+if(screen.orientation && typeof screen.orientation.lock==="function"){
+await screen.orientation.lock(videoOrientation==="portrait" ? "portrait" : "landscape");
+}
+}catch(error){
+console.log("Orientation lock:",error);
+}
+applyPreviewOrientation();
+}
+function updatePreviewOrientation(){
+if(driveModeOpen) applyPreviewOrientation();
 }
 function updateRecordingPerformance(){
 // 4K60 through a canvas is extremely demanding on iPhone Safari.
@@ -400,7 +444,9 @@ recordingDrawCounter=0;
 function updateSettingsUI(){
 qualityButtons.forEach(btn=>btn.classList.toggle("selected",btn.dataset.quality===videoQuality));
 fpsButtons.forEach(btn=>btn.classList.toggle("selected",Number(btn.dataset.fps)===videoFps));
-settingsSummaryValue.textContent=`${videoQuality} / ${videoFps} FPS`;
+orientationButtons.forEach(btn=>btn.classList.toggle("selected",btn.dataset.orientation===videoOrientation));
+settingsSummaryValue.textContent=`${videoQuality} / ${videoFps} FPS / ${videoOrientation==="portrait" ? "HOCHFORMAT" : "QUERFORMAT"}`;
+applyPreviewOrientation();
 }
 function openSettings(){
 if(running)return;
@@ -418,6 +464,14 @@ fpsButtons.forEach(btn=>btn.addEventListener("click",()=>{
 videoFps=Number(btn.dataset.fps);
 localStorage.setItem("dmMotionVideoFps",String(videoFps));
 updateSettingsUI();
+}));
+orientationButtons.forEach(btn=>btn.addEventListener("click",()=>{
+if(running)return;
+videoOrientation=btn.dataset.orientation;
+localStorage.setItem("dmMotionVideoOrientation",videoOrientation);
+recordingPortrait=videoOrientation==="portrait";
+updateSettingsUI();
+lockScreenOrientation();
 }));
 function setStatus(t){statusDisplay.textContent=t}
 function resetValues(){
@@ -546,6 +600,9 @@ return;
 const ctx=recordingCanvasCtx;
 const w=recordingCanvas.width;
 const h=recordingCanvas.height;
+// On 4K/60 we intentionally update the heavy 4K canvas every second
+// animation frame. The captured stream remains configured for 60 FPS,
+// while duplicate frames keep playback smooth instead of stuttering badly.
 recordingDrawCounter++;
 if(recordingDrawCounter % recordingDrawEvery !== 0){
 recordingAnimationFrame=requestAnimationFrame(drawRecordingOverlay);
@@ -553,8 +610,12 @@ return;
 }
 ctx.fillStyle="#000";
 ctx.fillRect(0,0,w,h);
-const sourceW=camera.videoWidth;
-const sourceH=camera.videoHeight;
+const sourceW=camera.videoWidth || w;
+const sourceH=camera.videoHeight || h;
+// Use the actual decoded camera orientation. This is important on iPhone:
+// the live <video> may already be correctly oriented even when Safari reports
+// a landscape pixel buffer. Rotate only when the source aspect ratio proves
+// that the frame really needs a 90° rotation for the requested output.
 function drawCover(targetW,targetH){
 const sourceRatio=sourceW/sourceH;
 const targetRatio=targetW/targetH;
@@ -568,16 +629,15 @@ sy=(sourceH-sh)/2;
 }
 ctx.drawImage(camera,sx,sy,sw,sh,0,0,targetW,targetH);
 }
-const portrait=(segmentOrientation==="portrait");
-// The canvas dimensions are fixed for THIS segment.
-// No canvas resize happens while its MediaRecorder is active.
-if(portrait && sourceW>sourceH){
+// The saved video uses the fixed orientation selected in Settings.
+// The phone may rotate physically, but the recording canvas dimensions never change.
+if(recordingPortrait && sourceW>sourceH){
 ctx.save();
 ctx.translate(0,h);
 ctx.rotate(Math.PI/2);
 drawCover(h,w);
 ctx.restore();
-}else if(!portrait && sourceH>sourceW){
+}else if(!recordingPortrait && sourceH>sourceW){
 ctx.save();
 ctx.translate(w,0);
 ctx.rotate(-Math.PI/2);
@@ -588,11 +648,13 @@ drawCover(w,h);
 }
 const scale=Math.max(w,h)/1280;
 const pad=Math.max(24,Math.round(30*scale));
+const small=Math.max(14,Math.round(18*scale));
 const logoSize=Math.max(20,Math.round(30*scale));
 const speedSize=Math.max(42,Math.round(66*scale));
 const unitSize=Math.max(13,Math.round(18*scale));
 const dataSize=Math.max(16,Math.round(23*scale));
 const radius=Math.max(10,Math.round(14*scale));
+// Very subtle top-left branding.
 ctx.save();
 ctx.font=`800 ${logoSize}px Arial, sans-serif`;
 ctx.textBaseline="top";
@@ -604,7 +666,9 @@ ctx.fillText("//",pad+dmWidth+Math.round(3*scale),pad);
 const slashWidth=ctx.measureText("//").width;
 ctx.fillStyle="rgba(255,255,255,.96)";
 ctx.fillText("MOTION",pad+dmWidth+slashWidth+Math.round(7*scale),pad);
+// Keep the recorded-video branding clean: DM//MOTION only.
 ctx.restore();
+// Speed top-right.
 const speed=String(speedDisplay.textContent||"0");
 ctx.save();
 ctx.textAlign="right";
@@ -616,6 +680,7 @@ ctx.font=`700 ${unitSize}px Arial, sans-serif`;
 ctx.fillStyle="rgba(255,255,255,.72)";
 ctx.fillText("KM/H",w-pad,pad+speedSize+Math.round(4*scale));
 ctx.restore();
+// Bottom-right telemetry: three driving G values + elapsed time.
 const lateralText=String(gLateralDisplay.textContent||"0.00 G");
 const brakeText=String(gBrakeDisplay.textContent||"0.00 G");
 const accelText=String(gAccelDisplay.textContent||"0.00 G");
@@ -646,22 +711,30 @@ ctx.fillText(`LATERAL ${lateralText}`,textX,boxY+textTop);
 ctx.fillText(`BRAKE ${brakeText}`,textX,boxY+textTop+line);
 ctx.fillText(`ACCEL ${accelText}`,textX,boxY+textTop+(line*2));
 ctx.font=`800 ${timeSize}px Arial, sans-serif`;
+ctx.fillStyle="rgba(255,255,255,.96)";
 ctx.fillText(timeText,textX,boxY+textTop+(line*3));
 ctx.restore();
 recordingAnimationFrame=requestAnimationFrame(drawRecordingOverlay);
 }
 function createRecordingStream(cameraStream){
-if(!HTMLCanvasElement.prototype.captureStream)return null;
+// iOS Safari does not provide HTMLVideoElement.captureStream().
+// The telemetry video is generated from the canvas, so only canvas.captureStream() is required.
+if(!HTMLCanvasElement.prototype.captureStream){
+return null;
+}
 recordingCanvas=document.createElement("canvas");
-const target=QUALITY_MAP[videoQuality] || QUALITY_MAP["1080p"];
-const portrait=segmentOrientation==="portrait";
-recordingCanvas.width=portrait ? target.height : target.width;
-recordingCanvas.height=portrait ? target.width : target.height;
+const dimensions=getRecordingDimensions();
+// Output dimensions are true 9:16 in portrait and 16:9 in landscape.
+// No 4:3 output is used.
+recordingCanvas.width=dimensions.width;
+recordingCanvas.height=dimensions.height;
 recordingCanvasCtx=recordingCanvas.getContext("2d",{alpha:false});
 updateRecordingPerformance();
 recordingCanvasStream=recordingCanvas.captureStream(videoFps);
 const audioTracks=cameraStream.getAudioTracks();
-if(audioTracks.length)recordingCanvasStream.addTrack(audioTracks[0]);
+if(audioTracks.length){
+recordingCanvasStream.addTrack(audioTracks[0]);
+}
 recordingStartedAt=Date.now();
 recordingAnimationFrame=requestAnimationFrame(drawRecordingOverlay);
 return recordingCanvasStream;
@@ -678,96 +751,6 @@ recordingCanvasStream=null;
 recordingCanvas=null;
 recordingCanvasCtx=null;
 }
-function getPhoneOrientation(){
-return window.innerHeight>window.innerWidth ? "portrait" : "landscape";
-}
-function startOrientationWatcher(){
-if(orientationWatcher)return;
-orientationWatcher=setInterval(()=>{
-if(!running || segmentSwitching)return;
-const next=getPhoneOrientation();
-if(next!==segmentOrientation)switchRecordingSegment(next);
-},300);
-}
-function stopOrientationWatcher(){
-if(orientationWatcher){
-clearInterval(orientationWatcher);
-orientationWatcher=null;
-}
-}
-function startSegment(cameraStream,orientation){
-return new Promise(resolve=>{
-segmentOrientation=orientation;
-recordedChunks=[];
-recordingMimeType=chooseRecordingMimeType();
-const recordingStream=createRecordingStream(cameraStream);
-if(!recordingStream){
-resolve(false);
-return;
-}
-const options=recordingMimeType ? {mimeType:recordingMimeType} : {};
-const recorder=new MediaRecorder(recordingStream,options);
-mediaRecorder=recorder;
-segmentStartedAt=Date.now();
-recorder.ondataavailable=(event)=>{
-if(event.data && event.data.size>0)recordedChunks.push(event.data);
-};
-recorder.onerror=(event)=>{
-console.log("Recorder:",event);
-setStatus("AUFNAHMEFEHLER");
-};
-recorder.start(500);
-setStatus(
-orientation==="portrait"
-? "DM MOTION • RECORDING • PORTRAIT"
-: "DM MOTION • RECORDING • LANDSCAPE"
-);
-resolve(true);
-});
-}
-function finishCurrentSegment(){
-return new Promise(resolve=>{
-const recorder=mediaRecorder;
-if(!recorder || recorder.state==="inactive"){
-stopRecordingCanvas();
-mediaRecorder=null;
-resolve();
-return;
-}
-const chunks=recordedChunks;
-const mime=recorder.mimeType || recordingMimeType || "video/mp4";
-const orientation=segmentOrientation;
-const started=segmentStartedAt;
-recorder.onstop=()=>{
-stopRecordingCanvas();
-if(chunks.length){
-recordingSegments.push({
-blob:new Blob(chunks,{type:mime}),
-mimeType:mime,
-orientation,
-duration:Math.max(0,Date.now()-started)
-});
-}
-mediaRecorder=null;
-recordedChunks=[];
-resolve();
-};
-recorder.stop();
-});
-}
-async function switchRecordingSegment(nextOrientation){
-if(!running || segmentSwitching || nextOrientation===segmentOrientation)return;
-segmentSwitching=true;
-setStatus("ORIENTIERUNG WECHSELT...");
-await finishCurrentSegment();
-if(running && camera.srcObject){
-// Let Safari finish the orientation transition before creating the next
-// recorder. The camera stream itself stays alive.
-await new Promise(resolve=>setTimeout(resolve,180));
-await startSegment(camera.srcObject,nextOrientation);
-}
-segmentSwitching=false;
-}
 async function startRecording(cameraStream){
 if(!window.MediaRecorder){
 setStatus("AUFNAHME NICHT VERFÜGBAR");
@@ -776,9 +759,9 @@ return false;
 try{
 await new Promise(resolve=>{
 const waitStart=performance.now();
-function waitFrame(){
+const waitFrame=()=>{
 if(camera.readyState>=2 && camera.videoWidth>0 && camera.videoHeight>0){
-requestAnimationFrame(resolve);
+requestAnimationFrame(()=>resolve());
 return;
 }
 if(performance.now()-waitStart>2500){
@@ -786,58 +769,68 @@ resolve();
 return;
 }
 requestAnimationFrame(waitFrame);
-}
+};
 waitFrame();
 });
-recordingSegments=[];
-recordedBlob=null;
 recordedChunks=[];
-recordedFileName="";
-recordingMimeType="";
-const ok=await startSegment(cameraStream,getPhoneOrientation());
-if(!ok){
-stopRecordingCanvas();
-mediaRecorder=null;
+recordedBlob=null;
+recordingMimeType=chooseRecordingMimeType();
+const recordingStream=createRecordingStream(cameraStream);
+if(!recordingStream){
+setStatus("TELEMETRIE-VIDEO NICHT VERFÜGBAR");
 return false;
 }
-startOrientationWatcher();
+const options=recordingMimeType
+? {mimeType:recordingMimeType}
+: {};
+mediaRecorder=new MediaRecorder(recordingStream,options);
+mediaRecorder.ondataavailable=(event)=>{
+if(event.data && event.data.size>0){
+recordedChunks.push(event.data);
+}
+};
+mediaRecorder.onerror=(event)=>{
+console.log("Recorder:",event);
+stopRecordingCanvas();
+setStatus("AUFNAHMEFEHLER");
+};
+mediaRecorder.onstop=()=>{
+stopRecordingCanvas();
+if(!recordedChunks.length){
+setStatus("KEIN VIDEO ERSTELLT");
+return;
+}
+const type=mediaRecorder.mimeType || recordingMimeType || "video/mp4";
+recordedBlob=new Blob(recordedChunks,{type});
+const extension=type.includes("webm") ? "webm" : "mp4";
+recordedFileName="DM_Motion_Telemetry_"+new Date().toISOString().replace(/[:.]/g,"-")+"."+extension;
+saveVideoButton.disabled=false;
+saveVideoButton.style.display="block";
+setStatus("VIDEO BEREIT • TELEMETRIE ENTHALTEN");
+};
+mediaRecorder.start(1000);
 return true;
 }catch(error){
 console.log("Recorder start:",error);
-stopOrientationWatcher();
 stopRecordingCanvas();
 mediaRecorder=null;
 return false;
 }
 }
 async function saveRecordedVideo(){
-if(!recordingSegments.length && !recordedBlob)return;
-const files=[];
-if(recordingSegments.length){
-recordingSegments.forEach((segment,index)=>{
-const ext=segment.mimeType.includes("webm") ? "webm" : "mp4";
-files.push(new File(
-[segment.blob],
-`DM_Motion_${String(index+1).padStart(2,"0")}_${segment.orientation}.${ext}`,
-{type:segment.mimeType || "video/mp4"}
-));
+if(!recordedBlob)return;
+const file=new File([recordedBlob],recordedFileName,{
+type:recordedBlob.type || "video/mp4"
 });
-}else{
-files.push(new File(
-[recordedBlob],
-recordedFileName,
-{type:recordedBlob.type || "video/mp4"}
-));
-}
 try{
-if(navigator.share && (!navigator.canShare || navigator.canShare({files}))){
+if(navigator.share && (!navigator.canShare || navigator.canShare({files:[file]}))){
 await navigator.share({
-files,
+files:[file],
 title:"DM Motion Video"
 });
 saveVideoButton.style.display="none";
 saveVideoButton.disabled=true;
-setStatus(files.length>1 ? "VIDEO-SEGMENTE GESPEICHERT" : "VIDEO GESPEICHERT / GETEILT");
+setStatus("VIDEO GESPEICHERT / GETEILT");
 return;
 }
 }catch(error){
@@ -847,37 +840,39 @@ return;
 }
 console.log("Share:",error);
 }
-files.forEach((file,index)=>{
-const url=URL.createObjectURL(file);
+const url=URL.createObjectURL(recordedBlob);
 const a=document.createElement("a");
 a.href=url;
-a.download=file.name;
+a.download=recordedFileName;
 a.style.display="none";
 document.body.appendChild(a);
 a.click();
 a.remove();
-setTimeout(()=>URL.revokeObjectURL(url),10000+index*500);
-});
+setTimeout(()=>{
+URL.revokeObjectURL(url);
+},10000);
 saveVideoButton.style.display="none";
 saveVideoButton.disabled=true;
-setStatus(files.length>1 ? "VIDEO-SEGMENTE GESPEICHERT" : "VIDEO GESPEICHERT");
+setStatus("VIDEO GESPEICHERT");
 }
 async function startCamera(){
+if(previewStream){
+camera.srcObject=previewStream;
+placeholder.style.display="none";
+applyPreviewOrientation();
+return true;
+}
 try{
-// IMPORTANT: keep the live iPhone camera request flexible.
-// Older stable DM Motion builds used this exact approach and Safari handled
-// the physical orientation of the preview correctly. Resolution/FPS settings
-// are applied to the recording canvas, not forced onto the live camera track.
 const stream=await navigator.mediaDevices.getUserMedia({
 video:{facingMode:{exact:"environment"}},
 audio:true
 });
+previewStream=stream;
 camera.srcObject=stream;
 camera.muted=true;
 camera.playsInline=true;
 placeholder.style.display="none";
 await camera.play().catch(()=>{});
-// Wait until Safari has delivered real camera frames before recording.
 if(camera.readyState<2){
 await new Promise(resolve=>{
 const done=()=>{camera.removeEventListener("loadeddata",done);resolve()};
@@ -885,16 +880,19 @@ camera.addEventListener("loadeddata",done,{once:true});
 setTimeout(resolve,1200);
 });
 }
+applyPreviewOrientation();
 return true;
 }catch(error){
 console.log("Camera:",error);
 try{
 const stream=await navigator.mediaDevices.getUserMedia({video:true,audio:true});
+previewStream=stream;
 camera.srcObject=stream;
 camera.muted=true;
 camera.playsInline=true;
 placeholder.style.display="none";
 await camera.play().catch(()=>{});
+applyPreviewOrientation();
 return true;
 }catch(fallbackError){
 console.log("Camera fallback:",fallbackError);
@@ -902,6 +900,16 @@ setStatus("KAMERA NICHT FREIGEGEBEN");
 return false;
 }
 }
+}
+async function stopPreviewCamera(){
+if(previewStream){
+previewStream.getTracks().forEach(track=>track.stop());
+previewStream=null;
+}
+if(camera.srcObject){
+camera.srcObject=null;
+}
+placeholder.style.display="flex";
 }
 function startGPS(){
 if(!navigator.geolocation){
@@ -929,43 +937,23 @@ const seconds=elapsed%60;
 timeDisplay.textContent=String(minutes).padStart(2,"0")+":"+String(seconds).padStart(2,"0");
 },250);
 }
-async function stopRace(){
+function stopRace(){
 running=false;
 startButton.textContent="START DRIVE";
 startButton.classList.remove("stop");
 recordBadge.style.display="none";
-stopOrientationWatcher();
 if(timer){clearInterval(timer);timer=null}
 if(gpsWatch!==null){
 navigator.geolocation.clearWatch(gpsWatch);
 gpsWatch=null;
 }
 if(mediaRecorder && mediaRecorder.state!=="inactive"){
-setStatus("VIDEO WIRD VERARBEITET...");
-await finishCurrentSegment();
-}else{
-stopRecordingCanvas();
+mediaRecorder.stop();
 }
-const stream=camera.srcObject;
-if(stream){
-stream.getTracks().forEach(track=>track.stop());
-}
-camera.srcObject=null;
-placeholder.style.display="flex";
 resetValues();
-if(recordingSegments.length){
-saveVideoButton.disabled=false;
-saveVideoButton.style.display="block";
-if(recordingSegments.length>1){
-setStatus(`${recordingSegments.length} VIDEO-SEGMENTE BEREIT`);
-}else{
-recordedBlob=recordingSegments[0].blob;
-recordedFileName=`DM_Motion_${recordingSegments[0].orientation}.mp4`;
-setStatus("VIDEO BEREIT • TELEMETRIE ENTHALTEN");
-}
-}else{
-setStatus("KEIN VIDEO ERSTELLT");
-}
+applyPreviewOrientation();
+if(!recordedBlob)setStatus("VIDEO WIRD VERARBEITET...");
+else setStatus("KAMERA • BEREIT");
 }
 startButton.addEventListener("click",async()=>{
 if(running){
@@ -980,6 +968,8 @@ recordedChunks=[];
 recordedFileName="";
 recordingMimeType="";
 running=true;
+recordingPortrait=videoOrientation==="portrait";
+await lockScreenOrientation();
 startButton.textContent="STOP DRIVE";
 startButton.classList.add("stop");
 recordBadge.style.display="flex";
@@ -998,10 +988,6 @@ startGPS();
 startTimer();
 if(camera.srcObject){
 if(!(await startRecording(camera.srcObject))){
-const stream=camera.srcObject;
-if(stream)stream.getTracks().forEach(track=>track.stop());
-camera.srcObject=null;
-placeholder.style.display="flex";
 running=false;
 startButton.textContent="START DRIVE";
 startButton.classList.remove("stop");
@@ -1011,6 +997,7 @@ if(gpsWatch!==null){
 navigator.geolocation.clearWatch(gpsWatch);
 gpsWatch=null;
 }
+setStatus("AUFNAHME NICHT VERFÜGBAR");
 return;
 }
 setStatus("DM MOTION • RECORDING");
@@ -1029,6 +1016,15 @@ document.getElementById("menu").classList.remove("open");
 }
 });
 const menuItems=[...document.querySelectorAll(".item")];
+const driveMenuItem=menuItems.find(item=>item.textContent.trim().startsWith("Drive"));
+if(driveMenuItem){
+driveMenuItem.addEventListener("click",async()=>{
+driveModeOpen=true;
+document.getElementById("menu").classList.remove("open");
+await startCamera();
+applyPreviewOrientation();
+});
+}
 const settingsMenuItem=menuItems.find(item=>item.textContent.trim().startsWith("Settings"));
 if(settingsMenuItem){settingsMenuItem.addEventListener("click",openSettings)}
 closeSettingsButton.addEventListener("click",closeSettings);
@@ -1038,6 +1034,24 @@ if(e.target===settingsPanel)closeSettings();
 updateSettingsUI();
 prepareSaveButton();
 resetValues();
+window.addEventListener("orientationchange",()=>{
+setTimeout(applyPreviewOrientation,80);
+});
+window.addEventListener("resize",()=>{
+setTimeout(applyPreviewOrientation,80);
+});
+document.addEventListener("visibilitychange",()=>{
+if(!document.hidden && driveModeOpen){
+setTimeout(()=>{
+if(previewStream && camera.srcObject!==previewStream)camera.srcObject=previewStream;
+applyPreviewOrientation();
+},120);
+}
+});
+setTimeout(async()=>{
+await startCamera();
+applyPreviewOrientation();
+},120);
 </script>
 </body>
 </html>
