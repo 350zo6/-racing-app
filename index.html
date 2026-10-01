@@ -535,6 +535,8 @@ let recordingCanvasStream=null;
 let recordingAnimationFrame=null;
 let recordingStartedAt=0;
 function drawRecordingOverlay(){
+if(!recordingCanvas || !recordingCanvasCtx) return;
+const ctx=recordingCanvasCtx;
 const w=recordingCanvas.width;
 const h=recordingCanvas.height;
 ctx.clearRect(0,0,w,h);
@@ -645,6 +647,8 @@ ctx.fillText(`ACCEL ${Math.abs(accelG||0).toFixed(2)} G`,tx,ty);
 ty+=Math.round(boxH*0.225);
 ctx.fillText(formatTime(elapsedTime||0),tx,ty);
 ctx.restore();
+// Keep drawing continuously so orientation changes are reflected while recording.
+recordingAnimationFrame=requestAnimationFrame(drawRecordingOverlay);
 }
 function createRecordingStream(cameraStream){
 // iOS Safari does not provide HTMLVideoElement.captureStream().
