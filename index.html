@@ -360,6 +360,11 @@ let recordedChunks=[];
 let recordedBlob=null;
 let recordedFileName="";
 let recordingMimeType="";
+let recordingSegments=[];
+let orientationWatcher=null;
+let segmentOrientation=null;
+let segmentSwitching=false;
+let segmentStartedAt=0;
 const saveVideoButton=document.getElementById("saveVideo");
 const settingsPanel=document.getElementById("settingsPanel");
 const closeSettingsButton=document.getElementById("closeSettings");
@@ -373,10 +378,8 @@ const QUALITY_MAP={
 "2K":{width:2560,height:1440},
 "4K":{width:3840,height:2160}
 };
-// v22 recording: keep one fixed MP4 track size for the whole recording.
-// Safari/MediaRecorder does not reliably support resizing captureStream()
-// while recording. The output aspect is chosen at START; the camera image
-// is reoriented inside that fixed frame when the phone rotates.
+// Orientation is detected automatically when recording starts.
+// The user does not need to choose portrait/landscape in Settings.
 let recordingPortrait=false;
 let recordingDrawCounter=0;
 let recordingDrawEvery=1;
@@ -550,9 +553,8 @@ return;
 }
 ctx.fillStyle="#000";
 ctx.fillRect(0,0,w,h);
-const sourceW=camera.videoWidth || w;
-const sourceH=camera.videoHeight || h;
-const currentPortrait=window.innerHeight > window.innerWidth;
+const sourceW=camera.videoWidth;
+const sourceH=camera.videoHeight;
 function drawCover(targetW,targetH){
 const sourceRatio=sourceW/sourceH;
 const targetRatio=targetW/targetH;
@@ -566,20 +568,20 @@ sy=(sourceH-sh)/2;
 }
 ctx.drawImage(camera,sx,sy,sw,sh,0,0,targetW,targetH);
 }
-// Never resize the recording canvas during capture.
-// Only rotate the current camera frame when the phone orientation differs
-// from the orientation used when the recording started.
-if(currentPortrait !== recordingPortrait){
+const portrait=(segmentOrientation==="portrait");
+// The canvas dimensions are fixed for THIS segment.
+// No canvas resize happens while its MediaRecorder is active.
+if(portrait && sourceW>sourceH){
 ctx.save();
-if(recordingPortrait){
 ctx.translate(0,h);
 ctx.rotate(Math.PI/2);
 drawCover(h,w);
-}else{
+ctx.restore();
+}else if(!portrait && sourceH>sourceW){
+ctx.save();
 ctx.translate(w,0);
 ctx.rotate(-Math.PI/2);
 drawCover(h,w);
-}
 ctx.restore();
 }else{
 drawCover(w,h);
@@ -649,24 +651,17 @@ ctx.restore();
 recordingAnimationFrame=requestAnimationFrame(drawRecordingOverlay);
 }
 function createRecordingStream(cameraStream){
-// iOS Safari does not provide HTMLVideoElement.captureStream().
-// The telemetry video is generated from the canvas, so only canvas.captureStream() is required.
-if(!HTMLCanvasElement.prototype.captureStream){
-return null;
-}
+if(!HTMLCanvasElement.prototype.captureStream)return null;
 recordingCanvas=document.createElement("canvas");
-const dimensions=getRecordingDimensions();
-// Output dimensions are selected ONCE at recording start.
-// The canvas is never resized while captureStream()/MediaRecorder is active.
-recordingCanvas.width=dimensions.width;
-recordingCanvas.height=dimensions.height;
+const target=QUALITY_MAP[videoQuality] || QUALITY_MAP["1080p"];
+const portrait=segmentOrientation==="portrait";
+recordingCanvas.width=portrait ? target.height : target.width;
+recordingCanvas.height=portrait ? target.width : target.height;
 recordingCanvasCtx=recordingCanvas.getContext("2d",{alpha:false});
 updateRecordingPerformance();
 recordingCanvasStream=recordingCanvas.captureStream(videoFps);
 const audioTracks=cameraStream.getAudioTracks();
-if(audioTracks.length){
-recordingCanvasStream.addTrack(audioTracks[0]);
-}
+if(audioTracks.length)recordingCanvasStream.addTrack(audioTracks[0]);
 recordingStartedAt=Date.now();
 recordingAnimationFrame=requestAnimationFrame(drawRecordingOverlay);
 return recordingCanvasStream;
@@ -683,6 +678,96 @@ recordingCanvasStream=null;
 recordingCanvas=null;
 recordingCanvasCtx=null;
 }
+function getPhoneOrientation(){
+return window.innerHeight>window.innerWidth ? "portrait" : "landscape";
+}
+function startOrientationWatcher(){
+if(orientationWatcher)return;
+orientationWatcher=setInterval(()=>{
+if(!running || segmentSwitching)return;
+const next=getPhoneOrientation();
+if(next!==segmentOrientation)switchRecordingSegment(next);
+},300);
+}
+function stopOrientationWatcher(){
+if(orientationWatcher){
+clearInterval(orientationWatcher);
+orientationWatcher=null;
+}
+}
+function startSegment(cameraStream,orientation){
+return new Promise(resolve=>{
+segmentOrientation=orientation;
+recordedChunks=[];
+recordingMimeType=chooseRecordingMimeType();
+const recordingStream=createRecordingStream(cameraStream);
+if(!recordingStream){
+resolve(false);
+return;
+}
+const options=recordingMimeType ? {mimeType:recordingMimeType} : {};
+const recorder=new MediaRecorder(recordingStream,options);
+mediaRecorder=recorder;
+segmentStartedAt=Date.now();
+recorder.ondataavailable=(event)=>{
+if(event.data && event.data.size>0)recordedChunks.push(event.data);
+};
+recorder.onerror=(event)=>{
+console.log("Recorder:",event);
+setStatus("AUFNAHMEFEHLER");
+};
+recorder.start(500);
+setStatus(
+orientation==="portrait"
+? "DM MOTION • RECORDING • PORTRAIT"
+: "DM MOTION • RECORDING • LANDSCAPE"
+);
+resolve(true);
+});
+}
+function finishCurrentSegment(){
+return new Promise(resolve=>{
+const recorder=mediaRecorder;
+if(!recorder || recorder.state==="inactive"){
+stopRecordingCanvas();
+mediaRecorder=null;
+resolve();
+return;
+}
+const chunks=recordedChunks;
+const mime=recorder.mimeType || recordingMimeType || "video/mp4";
+const orientation=segmentOrientation;
+const started=segmentStartedAt;
+recorder.onstop=()=>{
+stopRecordingCanvas();
+if(chunks.length){
+recordingSegments.push({
+blob:new Blob(chunks,{type:mime}),
+mimeType:mime,
+orientation,
+duration:Math.max(0,Date.now()-started)
+});
+}
+mediaRecorder=null;
+recordedChunks=[];
+resolve();
+};
+recorder.stop();
+});
+}
+async function switchRecordingSegment(nextOrientation){
+if(!running || segmentSwitching || nextOrientation===segmentOrientation)return;
+segmentSwitching=true;
+setStatus("ORIENTIERUNG WECHSELT...");
+await finishCurrentSegment();
+if(running && camera.srcObject){
+// Let Safari finish the orientation transition before creating the next
+// recorder. The camera stream itself stays alive.
+await new Promise(resolve=>setTimeout(resolve,180));
+await startSegment(camera.srcObject,nextOrientation);
+}
+segmentSwitching=false;
+}
 async function startRecording(cameraStream){
 if(!window.MediaRecorder){
 setStatus("AUFNAHME NICHT VERFÜGBAR");
@@ -691,9 +776,9 @@ return false;
 try{
 await new Promise(resolve=>{
 const waitStart=performance.now();
-const waitFrame=()=>{
+function waitFrame(){
 if(camera.readyState>=2 && camera.videoWidth>0 && camera.videoHeight>0){
-requestAnimationFrame(()=>resolve());
+requestAnimationFrame(resolve);
 return;
 }
 if(performance.now()-waitStart>2500){
@@ -701,68 +786,58 @@ resolve();
 return;
 }
 requestAnimationFrame(waitFrame);
-};
+}
 waitFrame();
 });
-recordedChunks=[];
+recordingSegments=[];
 recordedBlob=null;
-recordingMimeType=chooseRecordingMimeType();
-const recordingStream=createRecordingStream(cameraStream);
-if(!recordingStream){
-setStatus("TELEMETRIE-VIDEO NICHT VERFÜGBAR");
+recordedChunks=[];
+recordedFileName="";
+recordingMimeType="";
+const ok=await startSegment(cameraStream,getPhoneOrientation());
+if(!ok){
+stopRecordingCanvas();
+mediaRecorder=null;
 return false;
 }
-const options=recordingMimeType
-? {mimeType:recordingMimeType}
-: {};
-mediaRecorder=new MediaRecorder(recordingStream,options);
-mediaRecorder.ondataavailable=(event)=>{
-if(event.data && event.data.size>0){
-recordedChunks.push(event.data);
-}
-};
-mediaRecorder.onerror=(event)=>{
-console.log("Recorder:",event);
-stopRecordingCanvas();
-setStatus("AUFNAHMEFEHLER");
-};
-mediaRecorder.onstop=()=>{
-stopRecordingCanvas();
-if(!recordedChunks.length){
-setStatus("KEIN VIDEO ERSTELLT");
-return;
-}
-const type=mediaRecorder.mimeType || recordingMimeType || "video/mp4";
-recordedBlob=new Blob(recordedChunks,{type});
-const extension=type.includes("webm") ? "webm" : "mp4";
-recordedFileName="DM_Motion_Telemetry_"+new Date().toISOString().replace(/[:.]/g,"-")+"."+extension;
-saveVideoButton.disabled=false;
-saveVideoButton.style.display="block";
-setStatus("VIDEO BEREIT • TELEMETRIE ENTHALTEN");
-};
-mediaRecorder.start(1000);
+startOrientationWatcher();
 return true;
 }catch(error){
 console.log("Recorder start:",error);
+stopOrientationWatcher();
 stopRecordingCanvas();
 mediaRecorder=null;
 return false;
 }
 }
 async function saveRecordedVideo(){
-if(!recordedBlob)return;
-const file=new File([recordedBlob],recordedFileName,{
-type:recordedBlob.type || "video/mp4"
+if(!recordingSegments.length && !recordedBlob)return;
+const files=[];
+if(recordingSegments.length){
+recordingSegments.forEach((segment,index)=>{
+const ext=segment.mimeType.includes("webm") ? "webm" : "mp4";
+files.push(new File(
+[segment.blob],
+`DM_Motion_${String(index+1).padStart(2,"0")}_${segment.orientation}.${ext}`,
+{type:segment.mimeType || "video/mp4"}
+));
 });
+}else{
+files.push(new File(
+[recordedBlob],
+recordedFileName,
+{type:recordedBlob.type || "video/mp4"}
+));
+}
 try{
-if(navigator.share && (!navigator.canShare || navigator.canShare({files:[file]}))){
+if(navigator.share && (!navigator.canShare || navigator.canShare({files}))){
 await navigator.share({
-files:[file],
+files,
 title:"DM Motion Video"
 });
 saveVideoButton.style.display="none";
 saveVideoButton.disabled=true;
-setStatus("VIDEO GESPEICHERT / GETEILT");
+setStatus(files.length>1 ? "VIDEO-SEGMENTE GESPEICHERT" : "VIDEO GESPEICHERT / GETEILT");
 return;
 }
 }catch(error){
@@ -772,20 +847,20 @@ return;
 }
 console.log("Share:",error);
 }
-const url=URL.createObjectURL(recordedBlob);
+files.forEach((file,index)=>{
+const url=URL.createObjectURL(file);
 const a=document.createElement("a");
 a.href=url;
-a.download=recordedFileName;
+a.download=file.name;
 a.style.display="none";
 document.body.appendChild(a);
 a.click();
 a.remove();
-setTimeout(()=>{
-URL.revokeObjectURL(url);
-},10000);
+setTimeout(()=>URL.revokeObjectURL(url),10000+index*500);
+});
 saveVideoButton.style.display="none";
 saveVideoButton.disabled=true;
-setStatus("VIDEO GESPEICHERT");
+setStatus(files.length>1 ? "VIDEO-SEGMENTE GESPEICHERT" : "VIDEO GESPEICHERT");
 }
 async function startCamera(){
 try{
@@ -854,27 +929,43 @@ const seconds=elapsed%60;
 timeDisplay.textContent=String(minutes).padStart(2,"0")+":"+String(seconds).padStart(2,"0");
 },250);
 }
-function stopRace(){
+async function stopRace(){
 running=false;
 startButton.textContent="START DRIVE";
 startButton.classList.remove("stop");
 recordBadge.style.display="none";
+stopOrientationWatcher();
 if(timer){clearInterval(timer);timer=null}
 if(gpsWatch!==null){
 navigator.geolocation.clearWatch(gpsWatch);
 gpsWatch=null;
 }
 if(mediaRecorder && mediaRecorder.state!=="inactive"){
-mediaRecorder.stop();
+setStatus("VIDEO WIRD VERARBEITET...");
+await finishCurrentSegment();
+}else{
+stopRecordingCanvas();
 }
 const stream=camera.srcObject;
 if(stream){
-setTimeout(()=>stream.getTracks().forEach(track=>track.stop()),120);
+stream.getTracks().forEach(track=>track.stop());
 }
 camera.srcObject=null;
 placeholder.style.display="flex";
 resetValues();
-if(!recordedBlob)setStatus("VIDEO WIRD VERARBEITET...");
+if(recordingSegments.length){
+saveVideoButton.disabled=false;
+saveVideoButton.style.display="block";
+if(recordingSegments.length>1){
+setStatus(`${recordingSegments.length} VIDEO-SEGMENTE BEREIT`);
+}else{
+recordedBlob=recordingSegments[0].blob;
+recordedFileName=`DM_Motion_${recordingSegments[0].orientation}.mp4`;
+setStatus("VIDEO BEREIT • TELEMETRIE ENTHALTEN");
+}
+}else{
+setStatus("KEIN VIDEO ERSTELLT");
+}
 }
 startButton.addEventListener("click",async()=>{
 if(running){
@@ -922,7 +1013,7 @@ gpsWatch=null;
 }
 return;
 }
-setStatus(recordingPortrait ? "DM MOTION • RECORDING • PORTRAIT" : "DM MOTION • RECORDING • LANDSCAPE");
+setStatus("DM MOTION • RECORDING");
 }
 });
 saveVideoButton.addEventListener("click",saveRecordedVideo);
