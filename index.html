@@ -198,14 +198,6 @@ display:flex;justify-content:space-between;gap:12px;align-items:center;
 .settingsSheet{width:calc(100vw - 24px);padding-left:16px;padding-right:16px}
 }
 @media (max-width:600px) and (orientation:portrait){
-#camera{
-width:100vh;
-height:100vw;
-left:50%;
-top:50%;
-transform:translate(-50%,-50%) rotate(90deg);
-object-fit:cover;
-}
 #hud{grid-template-columns:repeat(2,1fr)}
 #speed{font-size:45px}
 }
@@ -575,23 +567,10 @@ const dx=(targetW-dw)/2;
 const dy=(targetH-dh)/2;
 ctx.drawImage(camera,0,0,sourceW,sourceH,dx,dy,dw,dh);
 }
-const sourceIsLandscape=sourceW>sourceH;
-const sourceIsPortrait=sourceH>sourceW;
-if(recordingPortrait && sourceIsLandscape){
-ctx.save();
-ctx.translate(0,h);
-ctx.rotate(Math.PI/2);
-drawContain(h,w);
-ctx.restore();
-}else if(!recordingPortrait && sourceIsPortrait){
-ctx.save();
-ctx.translate(w,0);
-ctx.rotate(-Math.PI/2);
-drawContain(h,w);
-ctx.restore();
-}else{
+// Draw the actual frame Safari is displaying. Do NOT rotate it based only on
+// track.videoWidth/videoHeight: on current iOS Safari those dimensions can
+// describe the sensor buffer rather than the visual orientation.
 drawContain(w,h);
-}
 const scale=Math.max(w,h)/1280;
 const pad=Math.max(24,Math.round(30*scale));
 const small=Math.max(14,Math.round(18*scale));
@@ -803,17 +782,12 @@ setStatus("VIDEO GESPEICHERT");
 }
 async function startCamera(){
 try{
-const target=QUALITY_MAP[videoQuality] || QUALITY_MAP["1080p"];
-// Keep the camera request exactly like the stable versions: no forced
-// aspectRatio and no manual rotation of the live <video> preview.
-// Safari/iPhone handles the live camera orientation itself.
+// IMPORTANT: keep the live iPhone camera request flexible.
+// Older stable DM Motion builds used this exact approach and Safari handled
+// the physical orientation of the preview correctly. Resolution/FPS settings
+// are applied to the recording canvas, not forced onto the live camera track.
 const stream=await navigator.mediaDevices.getUserMedia({
-video:{
-facingMode:{exact:"environment"},
-width:{ideal:target.width},
-height:{ideal:target.height},
-frameRate:{ideal:videoFps,max:videoFps}
-},
+video:{facingMode:{exact:"environment"}},
 audio:true
 });
 camera.srcObject=stream;
@@ -821,13 +795,19 @@ camera.muted=true;
 camera.playsInline=true;
 placeholder.style.display="none";
 await camera.play().catch(()=>{});
+// Wait until Safari has delivered real camera frames before recording.
+if(camera.readyState<2){
+await new Promise(resolve=>{
+const done=()=>{camera.removeEventListener("loadeddata",done);resolve()};
+camera.addEventListener("loadeddata",done,{once:true});
+setTimeout(resolve,1200);
+});
+}
 return true;
 }catch(error){
 console.log("Camera:",error);
 try{
-const stream=await navigator.mediaDevices.getUserMedia({
-video:{facingMode:"environment"},audio:true
-});
+const stream=await navigator.mediaDevices.getUserMedia({video:true,audio:true});
 camera.srcObject=stream;
 camera.muted=true;
 camera.playsInline=true;
