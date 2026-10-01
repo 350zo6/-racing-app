@@ -460,10 +460,11 @@ const lateralText=String(gLateralDisplay.textContent||"0.00 G");
 const brakeText=String(gBrakeDisplay.textContent||"0.00 G");
 const accelText=String(gAccelDisplay.textContent||"0.00 G");
 const timeText=String(timeDisplay.textContent||"00:00");
-const boxW=Math.max(205,Math.round(245*scale));
-const boxH=Math.max(118,Math.round(136*scale));
-const boxX=w-pad-boxW;
-const boxY=h-pad-boxH;
+const boxPad=Math.max(16,Math.round(18*scale));
+const boxW=Math.max(190,Math.round(225*scale));
+const boxH=Math.max(82,Math.round(102*scale));
+const boxX=w-boxPad-boxW;
+const boxY=h-boxPad-boxH;
 ctx.save();
 ctx.fillStyle="rgba(0,0,0,.18)";
 ctx.strokeStyle="rgba(255,255,255,.20)";
@@ -476,12 +477,14 @@ ctx.textAlign="left";
 ctx.textBaseline="top";
 ctx.font=`800 ${dataSize}px Arial, sans-serif`;
 ctx.fillStyle="rgba(255,255,255,.96)";
-ctx.fillText(`LATERAL ${lateralText}`,boxX+Math.round(16*scale),boxY+Math.round(12*scale));
-ctx.fillText(`BRAKE ${brakeText}`,boxX+Math.round(16*scale),boxY+Math.round(37*scale));
-ctx.fillText(`ACCEL ${accelText}`,boxX+Math.round(16*scale),boxY+Math.round(62*scale));
+const textX=boxX+Math.round(12*scale);
+const line= Math.max(20,Math.round(23*scale));
+ctx.fillText(`LATERAL ${lateralText}`,textX,boxY+Math.round(7*scale));
+ctx.fillText(`BRAKE ${brakeText}`,textX,boxY+Math.round(7*scale)+line);
+ctx.fillText(`ACCEL ${accelText}`,textX,boxY+Math.round(7*scale)+(line*2));
 ctx.font=`700 ${Math.max(13,Math.round(18*scale))}px Arial, sans-serif`;
 ctx.fillStyle="rgba(255,255,255,.72)";
-ctx.fillText(timeText,boxX+Math.round(16*scale),boxY+Math.round(91*scale));
+ctx.fillText(timeText,textX,boxY+Math.round(7*scale)+(line*3));
 ctx.restore();
 recordingAnimationFrame=requestAnimationFrame(drawRecordingOverlay);
 }
@@ -676,6 +679,13 @@ if(running){
 stopRace();
 return;
 }
+// Starting a new drive means the previous unsaved video is no longer the active save action.
+saveVideoButton.style.display="none";
+saveVideoButton.disabled=true;
+recordedBlob=null;
+recordedChunks=[];
+recordedFileName="";
+recordingMimeType="";
 running=true;
 startButton.textContent="STOP DRIVE";
 startButton.classList.add("stop");
