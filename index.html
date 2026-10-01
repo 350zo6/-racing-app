@@ -31,8 +31,10 @@ Drive surface in the selected aspect/orientation instead of following the
 browser viewport. Portrait stays portrait (centered with black side bars
 in a landscape viewport); landscape rotates into the available viewport. */
 #app.orientationForcePortrait{
-width:calc(100vh - 0px);height:calc(100vw - 0px);
-transform:translate(-50%,-50%);
+/* The selected portrait surface must remain 9:16 even when Safari
+temporarily reports a landscape viewport after the phone is rotated. */
+width:100vh;height:100vw;
+transform:translate(-50%,-50%) rotate(90deg);
 }
 #app.orientationForcePortrait #camera{
 width:100%;height:100%;object-fit:cover;transform:none;
@@ -69,6 +71,14 @@ transform:translate(-50%,-50%) rotate(-90deg);
 position:absolute;left:0;top:0;width:100%;height:100%;
 object-fit:cover;background:#111;z-index:1;
 transform:none;
+}
+/* Keep a sideways iPhone camera buffer upright in selected portrait mode. */
+#camera.cameraQuarterTurn{
+left:50%;top:50%;
+width:100%;height:100%;
+object-fit:cover;
+transform:translate(-50%,-50%) rotate(90deg);
+transform-origin:center center;
 }
 #shade{
 position:absolute;left:0;top:0;width:100%;height:100%;z-index:2;
@@ -455,6 +465,19 @@ const QUALITY_MAP={
 let recordingPortrait=videoOrientation==="portrait";
 let recordingDrawCounter=0;
 let recordingDrawEvery=1;
+let cameraSourceLandscape=false;
+function updateCameraSourceOrientation(){
+cameraSourceLandscape=!!(camera.videoWidth && camera.videoHeight && camera.videoWidth>camera.videoHeight);
+app.dataset.cameraSource=cameraSourceLandscape ? "landscape" : "portrait";
+}
+function applyCameraPreviewTransform(){
+/* Safari can expose the rear-camera buffer sideways on iPhone.
+The preview must follow the selected Drive orientation, not the
+physical phone orientation. */
+const targetPortrait=driveDisplayOrientation==="portrait";
+const needsQuarterTurn=targetPortrait && cameraSourceLandscape;
+camera.classList.toggle("cameraQuarterTurn",needsQuarterTurn);
+}
 function getRecordingDimensions(){
 const target=QUALITY_MAP[videoQuality] || QUALITY_MAP["1080p"];
 recordingPortrait=videoOrientation==="portrait";
@@ -481,20 +504,21 @@ app.dataset.orientation=driveDisplayOrientation;
 // orientation than the telemetry and controls.
 camera.style.setProperty("--preview-rotation","0deg");
 camera.classList.remove("orientationLocked");
+applyCameraPreviewTransform();
+}
+try{
+}
+}
+}
 }
 async function lockScreenOrientation(){
-try{
 if(screen.orientation && typeof screen.orientation.lock==="function"){
 await screen.orientation.lock(videoOrientation==="portrait" ? "portrait" : "landscape");
-}
 }catch(error){
 console.log("Orientation lock:",error);
-}
 applyPreviewOrientation();
-}
 function updatePreviewOrientation(){
 if(driveModeOpen) applyPreviewOrientation();
-}
 function openNavigation(){
 document.getElementById("menu").classList.add("open");
 app.classList.add("navigationOpen");
@@ -937,6 +961,7 @@ async function startCamera(){
 if(previewStream){
 camera.srcObject=previewStream;
 placeholder.style.display="none";
+if(camera.readyState>=2) updateCameraSourceOrientation();
 applyPreviewOrientation();
 return true;
 }
@@ -951,6 +976,7 @@ camera.muted=true;
 camera.playsInline=true;
 placeholder.style.display="none";
 await camera.play().catch(()=>{});
+updateCameraSourceOrientation();
 if(camera.readyState<2){
 await new Promise(resolve=>{
 const done=()=>{camera.removeEventListener("loadeddata",done);resolve()};
@@ -958,6 +984,7 @@ camera.addEventListener("loadeddata",done,{once:true});
 setTimeout(resolve,1200);
 });
 }
+updateCameraSourceOrientation();
 applyPreviewOrientation();
 return true;
 }catch(error){
@@ -970,6 +997,7 @@ camera.muted=true;
 camera.playsInline=true;
 placeholder.style.display="none";
 await camera.play().catch(()=>{});
+updateCameraSourceOrientation();
 applyPreviewOrientation();
 return true;
 }catch(fallbackError){
@@ -1116,6 +1144,10 @@ driveDisplayOrientation=videoOrientation;
 updateSettingsUI();
 prepareSaveButton();
 resetValues();
+camera.addEventListener("loadedmetadata",()=>{
+updateCameraSourceOrientation();
+if(driveModeOpen) applyPreviewOrientation();
+});
 window.addEventListener("orientationchange",()=>{
 setTimeout(()=>{
 if(!settingsPanel.classList.contains("open") && !document.getElementById("menu").classList.contains("open")) applyPreviewOrientation();
