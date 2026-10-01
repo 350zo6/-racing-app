@@ -533,6 +533,22 @@ let recordingCanvasCtx=null;
 let recordingCanvasStream=null;
 let recordingAnimationFrame=null;
 let recordingStartedAt=0;
+// Keep a stable orientation state during recording. iOS Safari can report
+// intermediate dimensions for a few frames while the phone is being rotated.
+// We wait until the orientation settles before switching the recorded camera
+// frame, which avoids black/intermediate frames.
+let stableDevicePortrait = window.innerHeight > window.innerWidth;
+let orientationTimer = null;
+function scheduleRecordingOrientationUpdate(){
+if(!isRecording) return;
+clearTimeout(orientationTimer);
+orientationTimer=setTimeout(()=>{
+const next=window.innerHeight > window.innerWidth;
+stableDevicePortrait=next;
+},300);
+}
+window.addEventListener("orientationchange",scheduleRecordingOrientationUpdate);
+window.addEventListener("resize",scheduleRecordingOrientationUpdate);
 function drawRecordingOverlay(){
 if(!recordingCanvas || !recordingCanvasCtx || !camera.videoWidth || !camera.videoHeight){
 recordingAnimationFrame=requestAnimationFrame(drawRecordingOverlay);
@@ -560,7 +576,7 @@ return;
 // the iPhone during recording, we only rotate/fit the current camera frame
 // inside that fixed canvas. This prevents the canvas from going black during
 // Safari's temporary video-dimension/orientation switch.
-const devicePortrait=window.innerHeight > window.innerWidth;
+const devicePortrait=stableDevicePortrait;
 const sourcePortrait=sourceH > sourceW;
 const needQuarterTurn=(devicePortrait !== sourcePortrait);
 function drawCoverFromSource(targetW,targetH){
@@ -697,10 +713,12 @@ if(audioTracks.length){
 recordingCanvasStream.addTrack(audioTracks[0]);
 }
 recordingStartedAt=Date.now();
+stableDevicePortrait=window.innerHeight > window.innerWidth;
 recordingAnimationFrame=requestAnimationFrame(drawRecordingOverlay);
 return recordingCanvasStream;
 }
 function stopRecordingCanvas(){
+clearTimeout(orientationTimer);
 if(recordingAnimationFrame){
 cancelAnimationFrame(recordingAnimationFrame);
 recordingAnimationFrame=null;
