@@ -85,6 +85,9 @@ background:rgba(10,10,10,.32);border-color:rgba(255,255,255,.24);backdrop-filter
 margin-top:4px;font-size:17px;font-weight:800;
 white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
 }
+#gforceCard .value{font-size:11px;line-height:1.28;margin-top:5px;letter-spacing:.4px}
+.gmini{display:flex;justify-content:space-between;gap:8px;white-space:nowrap}
+.gmini span{color:#bdbdbd}
 #status{
 position:absolute;left:50%;bottom:calc(77px + var(--safe-bottom));
 transform:translateX(-50%);z-index:20;
@@ -231,7 +234,9 @@ bottom:calc(79px + var(--safe-bottom));
 <button id="menuBtn" aria-label="Menü">■</button>
 <div id="hud">
 <div class="card"><div class="label">GPS</div><div class="value" id="gps">BEREIT</div></div>
-<div class="card"><div class="label">G-KRAFT</div><div class="value" id="gforce">0.00 G</div></div>
+<div class="card" id="gforceCard"><div class="label">G-KRAFT</div><div class="value" id="gforce"><div
+class="gmini"><span>LATERAL</span><b id="gLateral">0.00 G</b></div><div class="gmini"><span>BRAKE</span><b id="gBrake">0.00
+G</b></div><div class="gmini"><span>ACCEL</span><b id="gAccel">0.00 G</b></div></div></div>
 <div class="card"><div class="label">SENSOR</div><div class="value" id="sensor">BEREIT</div></div>
 <div class="card"><div class="label">ZEIT</div><div class="value" id="time">00:00</div></div>
 </div>
@@ -262,6 +267,9 @@ const startButton=document.getElementById("start");
 const speedDisplay=document.getElementById("speed");
 const gpsDisplay=document.getElementById("gps");
 const gforceDisplay=document.getElementById("gforce");
+const gLateralDisplay=document.getElementById("gLateral");
+const gBrakeDisplay=document.getElementById("gBrake");
+const gAccelDisplay=document.getElementById("gAccel");
 const sensorDisplay=document.getElementById("sensor");
 const timeDisplay=document.getElementById("time");
 const recordBadge=document.getElementById("rec");
@@ -285,7 +293,9 @@ function setStatus(t){statusDisplay.textContent=t}
 function resetValues(){
 speedDisplay.textContent="0";
 gpsDisplay.textContent="BEREIT";
-gforceDisplay.textContent="0.00 G";
+gLateralDisplay.textContent="0.00 G";
+gBrakeDisplay.textContent="0.00 G";
+gAccelDisplay.textContent="0.00 G";
 sensorDisplay.textContent="BEREIT";
 timeDisplay.textContent="00:00";
 gravityX=0;gravityY=0;gravityZ=0;
@@ -307,7 +317,10 @@ if(!gravityReady){
 gravityX=x;gravityY=y;gravityZ=z;
 gravityReady=true;
 filteredG=0;
-gforceDisplay.textContent="0.00 G";
+gLateralDisplay.textContent="0.00 G";
+gBrakeDisplay.textContent="0.00 G";
+gAccelDisplay.textContent="0.00 G";
+gforceDisplay.dataset.total="0.00";
 return;
 }
 gravityX=alpha*gravityX+(1-alpha)*x;
@@ -316,10 +329,25 @@ gravityZ=alpha*gravityZ+(1-alpha)*z;
 const dx=x-gravityX;
 const dy=y-gravityY;
 const dz=z-gravityZ;
-const acceleration=Math.sqrt(dx*dx+dy*dy+dz*dz);
-const rawG=acceleration/9.80665;
-filteredG=filteredG*.75+rawG*.25;
-gforceDisplay.textContent=filteredG.toFixed(2)+" G";
+// Map the phone axes to driving axes using the current screen orientation.
+// Assumption for this first version: phone top points roughly toward the car's front.
+const angle=(screen.orientation && typeof screen.orientation.angle === "number")
+? screen.orientation.angle
+: (window.orientation || 0);
+let lateral=dx;
+let longitudinal=dy;
+if(angle===90){ lateral=dy; longitudinal=-dx; }
+else if(angle===180){ lateral=-dx; longitudinal=-dy; }
+else if(angle===270){ lateral=-dy; longitudinal=dx; }
+const lateralG=Math.abs(lateral)/9.80665;
+const brakeG=Math.max(0,-longitudinal)/9.80665;
+const accelG=Math.max(0,longitudinal)/9.80665;
+const totalG=Math.sqrt(dx*dx+dy*dy+dz*dz)/9.80665;
+filteredG=filteredG*.75+totalG*.25;
+gforceDisplay.dataset.total=filteredG.toFixed(2);
+gLateralDisplay.textContent=lateralG.toFixed(2)+" G";
+gBrakeDisplay.textContent=brakeG.toFixed(2)+" G";
+gAccelDisplay.textContent=accelG.toFixed(2)+" G";
 }
 async function startMotion(){
 sensorDisplay.textContent="PRÜFE...";
@@ -427,11 +455,13 @@ ctx.font=`700 ${unitSize}px Arial, sans-serif`;
 ctx.fillStyle="rgba(255,255,255,.72)";
 ctx.fillText("KM/H",w-pad,pad+speedSize+Math.round(4*scale));
 ctx.restore();
-// Bottom-right telemetry: G-force + elapsed time.
-const gText=String(gforceDisplay.textContent||"0.00 G");
+// Bottom-right telemetry: three driving G values + elapsed time.
+const lateralText=String(gLateralDisplay.textContent||"0.00 G");
+const brakeText=String(gBrakeDisplay.textContent||"0.00 G");
+const accelText=String(gAccelDisplay.textContent||"0.00 G");
 const timeText=String(timeDisplay.textContent||"00:00");
-const boxW=Math.max(190,Math.round(220*scale));
-const boxH=Math.max(72,Math.round(86*scale));
+const boxW=Math.max(205,Math.round(245*scale));
+const boxH=Math.max(118,Math.round(136*scale));
 const boxX=w-pad-boxW;
 const boxY=h-pad-boxH;
 ctx.save();
@@ -446,10 +476,12 @@ ctx.textAlign="left";
 ctx.textBaseline="top";
 ctx.font=`800 ${dataSize}px Arial, sans-serif`;
 ctx.fillStyle="rgba(255,255,255,.96)";
-ctx.fillText(`G ${gText}`,boxX+Math.round(16*scale),boxY+Math.round(13*scale));
+ctx.fillText(`LATERAL ${lateralText}`,boxX+Math.round(16*scale),boxY+Math.round(12*scale));
+ctx.fillText(`BRAKE ${brakeText}`,boxX+Math.round(16*scale),boxY+Math.round(37*scale));
+ctx.fillText(`ACCEL ${accelText}`,boxX+Math.round(16*scale),boxY+Math.round(62*scale));
 ctx.font=`700 ${Math.max(13,Math.round(18*scale))}px Arial, sans-serif`;
 ctx.fillStyle="rgba(255,255,255,.72)";
-ctx.fillText(timeText,boxX+Math.round(16*scale),boxY+Math.round(48*scale));
+ctx.fillText(timeText,boxX+Math.round(16*scale),boxY+Math.round(91*scale));
 ctx.restore();
 recordingAnimationFrame=requestAnimationFrame(drawRecordingOverlay);
 }
@@ -546,6 +578,8 @@ await navigator.share({
 files:[file],
 title:"DM Motion Video"
 });
+saveVideoButton.style.display="none";
+saveVideoButton.disabled=true;
 setStatus("VIDEO GESPEICHERT / GETEILT");
 return;
 }
@@ -567,7 +601,9 @@ a.remove();
 setTimeout(()=>{
 URL.revokeObjectURL(url);
 },10000);
-setStatus("VIDEO ZUM SPEICHERN BEREIT");
+saveVideoButton.style.display="none";
+saveVideoButton.disabled=true;
+setStatus("VIDEO GESPEICHERT");
 }
 async function startCamera(){
 try{
