@@ -438,10 +438,7 @@ ctx.fillText("//",pad+dmWidth+Math.round(3*scale),pad);
 const slashWidth=ctx.measureText("//").width;
 ctx.fillStyle="rgba(255,255,255,.96)";
 ctx.fillText("MOTION",pad+dmWidth+slashWidth+Math.round(7*scale),pad);
-ctx.font=`600 ${small}px Arial, sans-serif`;
-ctx.fillStyle="rgba(255,255,255,.55)";
-ctx.letterSpacing="4px";
-ctx.fillText("D R I V E T E L E M E T R Y",pad,pad+logoSize+Math.round(7*scale));
+// Keep the recorded-video branding clean: DM//MOTION only.
 ctx.restore();
 // Speed top-right.
 const speed=String(speedDisplay.textContent||"0");
@@ -482,7 +479,8 @@ const line= Math.max(20,Math.round(23*scale));
 ctx.fillText(`LATERAL ${lateralText}`,textX,boxY+Math.round(7*scale));
 ctx.fillText(`BRAKE ${brakeText}`,textX,boxY+Math.round(7*scale)+line);
 ctx.fillText(`ACCEL ${accelText}`,textX,boxY+Math.round(7*scale)+(line*2));
-ctx.font=`800 ${dataSize}px Arial, sans-serif`;
+const timeSize=Math.max(19,Math.round(dataSize*1.18));
+ctx.font=`800 ${timeSize}px Arial, sans-serif`;
 ctx.fillStyle="rgba(255,255,255,.96)";
 ctx.fillText(timeText,textX,boxY+Math.round(7*scale)+(line*3));
 ctx.restore();
