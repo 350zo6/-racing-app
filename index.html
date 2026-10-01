@@ -557,20 +557,37 @@ const sourceH=camera.videoHeight || h;
 // the live <video> may already be correctly oriented even when Safari reports
 // a landscape pixel buffer. Rotate only when the source aspect ratio proves
 // that the frame really needs a 90° rotation for the requested output.
-function drawContain(targetW,targetH){
+function drawCover(targetW,targetH){
 const sourceRatio=sourceW/sourceH;
 const targetRatio=targetW/targetH;
-let dw=targetW,dh=targetH;
-if(sourceRatio>targetRatio){dh=targetW/sourceRatio;}
-else if(sourceRatio<targetRatio){dw=targetH*sourceRatio;}
-const dx=(targetW-dw)/2;
-const dy=(targetH-dh)/2;
-ctx.drawImage(camera,0,0,sourceW,sourceH,dx,dy,dw,dh);
+let sx=0,sy=0,sw=sourceW,sh=sourceH;
+if(sourceRatio>targetRatio){
+sw=sourceH*targetRatio;
+sx=(sourceW-sw)/2;
+}else if(sourceRatio<targetRatio){
+sh=sourceW/targetRatio;
+sy=(sourceH-sh)/2;
 }
-// Draw the actual frame Safari is displaying. Do NOT rotate it based only on
-// track.videoWidth/videoHeight: on current iOS Safari those dimensions can
-// describe the sensor buffer rather than the visual orientation.
-drawContain(w,h);
+ctx.drawImage(camera,sx,sy,sw,sh,0,0,targetW,targetH);
+}
+// The live camera preview stays untouched. For the saved video we adapt the
+// camera buffer to the phone orientation, then fill the exact 9:16 or 16:9
+// recording canvas. This keeps the overlays inside the final video frame.
+if(recordingPortrait && sourceW>sourceH){
+ctx.save();
+ctx.translate(0,h);
+ctx.rotate(Math.PI/2);
+drawCover(h,w);
+ctx.restore();
+}else if(!recordingPortrait && sourceH>sourceW){
+ctx.save();
+ctx.translate(w,0);
+ctx.rotate(-Math.PI/2);
+drawCover(h,w);
+ctx.restore();
+}else{
+drawCover(w,h);
+}
 const scale=Math.max(w,h)/1280;
 const pad=Math.max(24,Math.round(30*scale));
 const small=Math.max(14,Math.round(18*scale));
