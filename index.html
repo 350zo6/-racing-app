@@ -198,6 +198,14 @@ display:flex;justify-content:space-between;gap:12px;align-items:center;
 .settingsSheet{width:calc(100vw - 24px);padding-left:16px;padding-right:16px}
 }
 @media (max-width:600px) and (orientation:portrait){
+#camera{
+width:100vh;
+height:100vw;
+left:50%;
+top:50%;
+transform:translate(-50%,-50%) rotate(90deg);
+object-fit:cover;
+}
 #hud{grid-template-columns:repeat(2,1fr)}
 #speed{font-size:45px}
 }
@@ -549,41 +557,22 @@ if(recordingDrawCounter % recordingDrawEvery !== 0){
 recordingAnimationFrame=requestAnimationFrame(drawRecordingOverlay);
 return;
 }
-ctx.clearRect(0,0,w,h);
+ctx.fillStyle="#000";
+ctx.fillRect(0,0,w,h);
 const sourceW=camera.videoWidth || w;
 const sourceH=camera.videoHeight || h;
-function drawCover(targetW,targetH){
-const sourceRatio=sourceW/sourceH;
-const targetRatio=targetW/targetH;
-let sx=0,sy=0,sw=sourceW,sh=sourceH;
-if(sourceRatio>targetRatio){
-sh=sourceH;
-sw=sourceH*targetRatio;
-sx=(sourceW-sw)/2;
-}else if(sourceRatio<targetRatio){
-sw=sourceW;
-sh=sourceW/targetRatio;
-sy=(sourceH-sh)/2;
-}
-ctx.drawImage(camera,sx,sy,sw,sh,0,0,targetW,targetH);
-}
-// Safari may expose the camera stream as landscape even while the phone
-// is physically portrait. Rotate that source by 90° so the saved file
-// is genuinely portrait instead of a landscape video with black bars.
-if(recordingPortrait && sourceW>sourceH){
+// The camera stream is requested as a stable 16:9 landscape source.
+// In portrait we physically rotate those frames into the 9:16 canvas.
+// This avoids relying on Safari's inconsistent MP4 rotation metadata.
+if(recordingPortrait){
 ctx.save();
 ctx.translate(0,h);
 ctx.rotate(Math.PI/2);
-drawCover(h,w);
-ctx.restore();
-}else if(!recordingPortrait && sourceH>sourceW){
-ctx.save();
-ctx.translate(w,0);
-ctx.rotate(-Math.PI/2);
-drawCover(h,w);
+// After rotation, the drawing area is h x w (16:9).
+ctx.drawImage(camera,0,0,sourceW,sourceH,0,0,h,w);
 ctx.restore();
 }else{
-drawCover(w,h);
+ctx.drawImage(camera,0,0,sourceW,sourceH,0,0,w,h);
 }
 const scale=Math.max(w,h)/1280;
 const pad=Math.max(24,Math.round(30*scale));
@@ -667,7 +656,7 @@ const dimensions=getRecordingDimensions();
 // No 4:3 output is used.
 recordingCanvas.width=dimensions.width;
 recordingCanvas.height=dimensions.height;
-recordingCanvasCtx=recordingCanvas.getContext("2d",{alpha:false,desynchronized:true});
+recordingCanvasCtx=recordingCanvas.getContext("2d",{alpha:false});
 updateRecordingPerformance();
 recordingCanvasStream=recordingCanvas.captureStream(videoFps);
 const audioTracks=cameraStream.getAudioTracks();
@@ -690,12 +679,27 @@ recordingCanvasStream=null;
 recordingCanvas=null;
 recordingCanvasCtx=null;
 }
-function startRecording(cameraStream){
+async function startRecording(cameraStream){
 if(!window.MediaRecorder){
 setStatus("AUFNAHME NICHT VERFÜGBAR");
 return false;
 }
 try{
+await new Promise(resolve=>{
+const waitStart=performance.now();
+const waitFrame=()=>{
+if(camera.readyState>=2 && camera.videoWidth>0 && camera.videoHeight>0){
+requestAnimationFrame(()=>resolve());
+return;
+}
+if(performance.now()-waitStart>2500){
+resolve();
+return;
+}
+requestAnimationFrame(waitFrame);
+};
+waitFrame();
+});
 recordedChunks=[];
 recordedBlob=null;
 recordingMimeType=chooseRecordingMimeType();
@@ -782,18 +786,17 @@ setStatus("VIDEO GESPEICHERT");
 async function startCamera(){
 try{
 const target=QUALITY_MAP[videoQuality] || QUALITY_MAP["1080p"];
-const portrait=window.innerHeight > window.innerWidth;
-// The recording/output aspect ratio is always true 9:16 portrait or 16:9 landscape.
-// Ask the camera for the same orientation ratio instead of a 4:3 source.
-const targetAspect=portrait ? 9/16 : 16/9;
-const requestedWidth=portrait ? target.height : target.width;
-const requestedHeight=portrait ? target.width : target.height;
+// iOS Safari can report the physical sensor buffer in the opposite
+// orientation from the image actually shown in the <video>. In particular,
+// portrait dimension requests can produce a landscape track on iOS 26/27.
+// We therefore request the stable landscape 16:9 camera stream and rotate it
+// ourselves for portrait preview/recording. The OUTPUT is still true 9:16.
 const stream=await navigator.mediaDevices.getUserMedia({
 video:{
 facingMode:{exact:"environment"},
-aspectRatio:{ideal:targetAspect},
-width:{ideal:requestedWidth},
-height:{ideal:requestedHeight},
+aspectRatio:{ideal:16/9},
+width:{ideal:target.width},
+height:{ideal:target.height},
 frameRate:{ideal:videoFps,max:videoFps}
 },
 audio:true
@@ -888,7 +891,7 @@ return;
 startGPS();
 startTimer();
 if(camera.srcObject){
-if(!startRecording(camera.srcObject)){
+if(!(await startRecording(camera.srcObject))){
 const stream=camera.srcObject;
 if(stream)stream.getTracks().forEach(track=>track.stop());
 camera.srcObject=null;
