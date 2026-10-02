@@ -404,19 +404,16 @@ return recordingPortrait
 : {width:target.width,height:target.height};
 }
 function applyPreviewOrientation(){
-const angle=(screen.orientation && typeof screen.orientation.angle==="number")
-? screen.orientation.angle
-: (window.orientation || 0);
-const targetPortrait=videoOrientation==="portrait";
-let rotation=0;
-if(targetPortrait){
-if(angle===90) rotation=-90;
-else if(angle===270) rotation=90;
-else if(angle===180) rotation=180;
-}else{
-if(angle===0 || angle===180) rotation=90;
-else rotation=0;
-}
+/* v24.1 FIX:
+Keep the live camera preview in the same full-screen frame as before START.
+Safari can report a changed screen.orientation.angle after the recording
+starts/locks, even though the camera preview itself is already correctly
+oriented. Rotating the full-size <video> element then makes its 9:16
+viewport appear as a narrow strip with black space above and below.
+The selected orientation is still used for the recording canvas; the live
+preview itself must not be rotated here.
+*/
+const rotation=0;
 camera.style.setProperty("--preview-rotation",rotation+"deg");
 camera.classList.toggle("orientationLocked",true);
 camera.dataset.orientation=videoOrientation;
