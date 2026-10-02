@@ -23,8 +23,8 @@ body{touch-action:manipulation}
 #camera{
 position:absolute;left:0;top:0;width:100%;height:100%;
 object-fit:cover;background:#111;z-index:1;
-object-position:center center;
-transform:none;
+transform:rotate(var(--preview-rotation,0deg));
+transform-origin:center center;
 transition:none;
 }
 #camera.orientationLocked{
@@ -403,33 +403,23 @@ return recordingPortrait
 ? {width:target.height,height:target.width}
 : {width:target.width,height:target.height};
 }
-function forceCameraFullscreen(){
-// Keep the live preview exactly like the original v24 fullscreen camera.
-// Do not alter video dimensions, object-fit, transform or viewport geometry.
-camera.style.width="100%";
-camera.style.height="100%";
-camera.style.left="0";
-camera.style.top="0";
-camera.style.right="auto";
-camera.style.bottom="auto";
-camera.style.objectFit="cover";
-camera.style.objectPosition="center center";
-camera.style.transform="none";
-}
-function scheduleCameraFullscreen(){
-forceCameraFullscreen();
-requestAnimationFrame(forceCameraFullscreen);
-setTimeout(forceCameraFullscreen,120);
-}
 function applyPreviewOrientation(){
-/* Keep the live camera preview fullscreen. The selected video orientation
-is used by the recording canvas; the live <video> itself must never be
-rotated or resized when recording starts/stops or when Safari reports a
-different screen angle. */
-camera.style.setProperty("--preview-rotation","0deg");
-camera.classList.remove("orientationLocked");
+const angle=(screen.orientation && typeof screen.orientation.angle==="number")
+? screen.orientation.angle
+: (window.orientation || 0);
+const targetPortrait=videoOrientation==="portrait";
+let rotation=0;
+if(targetPortrait){
+if(angle===90) rotation=-90;
+else if(angle===270) rotation=90;
+else if(angle===180) rotation=180;
+}else{
+if(angle===0 || angle===180) rotation=90;
+else rotation=0;
+}
+camera.style.setProperty("--preview-rotation",rotation+"deg");
+camera.classList.toggle("orientationLocked",true);
 camera.dataset.orientation=videoOrientation;
-forceCameraFullscreen();
 }
 async function lockScreenOrientation(){
 try{
@@ -481,6 +471,7 @@ videoOrientation=btn.dataset.orientation;
 localStorage.setItem("dmMotionVideoOrientation",videoOrientation);
 recordingPortrait=videoOrientation==="portrait";
 updateSettingsUI();
+lockScreenOrientation();
 }));
 function setStatus(t){statusDisplay.textContent=t}
 function resetValues(){
@@ -805,7 +796,6 @@ setStatus("AUFNAHMEFEHLER");
 };
 mediaRecorder.onstop=()=>{
 stopRecordingCanvas();
-scheduleCameraFullscreen();
 if(!recordedChunks.length){
 setStatus("KEIN VIDEO ERSTELLT");
 return;
@@ -819,7 +809,6 @@ saveVideoButton.style.display="block";
 setStatus("VIDEO BEREIT • TELEMETRIE ENTHALTEN");
 };
 mediaRecorder.start(1000);
-scheduleCameraFullscreen();
 return true;
 }catch(error){
 console.log("Recorder start:",error);
@@ -871,7 +860,6 @@ if(previewStream){
 camera.srcObject=previewStream;
 placeholder.style.display="none";
 applyPreviewOrientation();
-scheduleCameraFullscreen();
 return true;
 }
 try{
@@ -893,7 +881,6 @@ setTimeout(resolve,1200);
 });
 }
 applyPreviewOrientation();
-scheduleCameraFullscreen();
 return true;
 }catch(error){
 console.log("Camera:",error);
@@ -906,7 +893,6 @@ camera.playsInline=true;
 placeholder.style.display="none";
 await camera.play().catch(()=>{});
 applyPreviewOrientation();
-scheduleCameraFullscreen();
 return true;
 }catch(fallbackError){
 console.log("Camera fallback:",fallbackError);
@@ -965,7 +951,6 @@ if(mediaRecorder && mediaRecorder.state!=="inactive"){
 mediaRecorder.stop();
 }
 resetValues();
-applyPreviewOrientation();
 if(!recordedBlob)setStatus("VIDEO WIRD VERARBEITET...");
 else setStatus("KAMERA • BEREIT");
 }
@@ -983,10 +968,6 @@ recordedFileName="";
 recordingMimeType="";
 running=true;
 recordingPortrait=videoOrientation==="portrait";
-// Do NOT lock Safari's screen orientation when recording starts.
-// iOS can recalculate the visual viewport and leave black bars around the
-// live camera until the phone is rotated again. The recording orientation
-// is already fixed by the canvas dimensions, so no screen lock is needed.
 startButton.textContent="STOP DRIVE";
 startButton.classList.add("stop");
 recordBadge.style.display="flex";
@@ -1052,10 +1033,10 @@ updateSettingsUI();
 prepareSaveButton();
 resetValues();
 window.addEventListener("orientationchange",()=>{
-setTimeout(()=>{applyPreviewOrientation();scheduleCameraFullscreen();},80);
+setTimeout(applyPreviewOrientation,80);
 });
 window.addEventListener("resize",()=>{
-setTimeout(()=>{applyPreviewOrientation();scheduleCameraFullscreen();},80);
+setTimeout(applyPreviewOrientation,80);
 });
 document.addEventListener("visibilitychange",()=>{
 if(!document.hidden && driveModeOpen){
