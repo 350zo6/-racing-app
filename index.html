@@ -31,11 +31,14 @@ Drive surface in the selected aspect/orientation instead of following the
 browser viewport. Portrait stays portrait (centered with black side bars
 in a landscape viewport); landscape rotates into the available viewport. */
 #app.orientationForcePortrait{
-/* Physical viewport is landscape, but Drive is locked to portrait.
-Build a portrait surface first, then rotate the whole surface into
-the landscape viewport. */
+/* Physical phone is landscape, but Drive is locked to portrait.
+Build a portrait surface from the real viewport dimensions and rotate
+the whole surface so the portrait UI fills the landscape screen. */
 width:100vh;height:100vw;
 transform:translate(-50%,-50%) rotate(-90deg);
+}
+#app.orientationForcePortrait.orientationRight{
+transform:translate(-50%,-50%) rotate(90deg);
 }
 #app.orientationForcePortrait #camera{
 width:100%;height:100%;object-fit:cover;transform:none;
@@ -466,11 +469,26 @@ return recordingPortrait
 ? {width:target.height,height:target.width}
 : {width:target.width,height:target.height};
 }
+function getPhysicalOrientation(){
+/* iPhone Safari can keep the CSS viewport in the previous orientation after
+an orientation lock. window.orientation follows the physical device angle
+more reliably for this app-level lock. */
+const raw=Number(window.orientation);
+if(Number.isFinite(raw)){
+const normalized=((raw%360)+360)%360;
+if(normalized===90 || normalized===270)return normalized===90 ? "landscapeLeft" : "landscapeRight";
+return "portrait";
+}
+return window.innerWidth>window.innerHeight ? "landscapeLeft" : "portrait";
+}
+function getPhysicalAngle(){
+const raw=Number(window.orientation);
+if(Number.isFinite(raw))return ((raw%360)+360)%360;
+return window.innerWidth>window.innerHeight ? 90 : 0;
+}
 function applyPreviewOrientation(){
-/* Use the actual CSS viewport dimensions. Do not use screen.orientation.type:
-on iOS Safari it can remain locked/stale after a previous orientation lock
-and can falsely report landscape while the visible viewport is portrait. */
-const viewportLandscape=window.innerWidth>window.innerHeight;
+const physicalOrientation=getPhysicalOrientation();
+const viewportLandscape=physicalOrientation!=="portrait";
 const targetLandscape=driveDisplayOrientation==="landscape";
 /* The selected Drive orientation is authoritative. Only add the CSS
 orientation surface when the physical viewport differs from the selection.
@@ -481,6 +499,7 @@ const forcePortrait=!targetLandscape && viewportLandscape;
 app.classList.toggle("orientationForce",forceLandscape||forcePortrait);
 app.classList.toggle("orientationForceLandscape",forceLandscape);
 app.classList.toggle("orientationForcePortrait",forcePortrait);
+app.classList.toggle("orientationRight",forcePortrait && physicalOrientation==="landscapeRight");
 app.dataset.orientation=driveDisplayOrientation;
 // Never rotate the camera element separately. The whole Drive UI is rotated
 // as one surface, which prevents the camera from ending up in a different
@@ -488,19 +507,19 @@ app.dataset.orientation=driveDisplayOrientation;
 camera.style.setProperty("--preview-rotation","0deg");
 camera.classList.remove("orientationLocked");
 }
-async function lockScreenOrientation(){
 try{
+}
+}
+}
+}
+async function lockScreenOrientation(){
 if(screen.orientation && typeof screen.orientation.lock==="function"){
 await screen.orientation.lock(videoOrientation==="portrait" ? "portrait" : "landscape");
-}
 }catch(error){
 console.log("Orientation lock:",error);
-}
 applyPreviewOrientation();
-}
 function updatePreviewOrientation(){
 if(driveModeOpen) applyPreviewOrientation();
-}
 function openNavigation(){
 document.getElementById("menu").classList.add("open");
 app.classList.add("navigationOpen");
@@ -599,9 +618,7 @@ const dy=y-gravityY;
 const dz=z-gravityZ;
 // Map the phone axes to driving axes using the current screen orientation.
 // Assumption for this first version: phone top points roughly toward the car's front.
-const angle=(screen.orientation && typeof screen.orientation.angle === "number")
-? screen.orientation.angle
-: (window.orientation || 0);
+const angle=getPhysicalAngle();
 let lateral=dx;
 let longitudinal=dy;
 if(angle===90){ lateral=dy; longitudinal=-dx; }
