@@ -21,13 +21,10 @@ font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display","Helvetica Neue",A
 body{touch-action:manipulation}
 #app{position:fixed;inset:0;background:#050505;overflow:hidden}
 #camera{
-position:fixed;left:50%;top:50%;width:100%;height:100%;
-min-width:0;min-height:0;
-object-fit:fill;background:#111;z-index:1;
+position:absolute;left:0;top:0;width:100%;height:100%;
+object-fit:cover;background:#111;z-index:1;
 object-position:center center;
-display:block;
-transform:translate(-50%,-50%);
-transform-origin:center center;
+transform:none;
 transition:none;
 }
 #camera.orientationLocked{
@@ -407,20 +404,17 @@ return recordingPortrait
 : {width:target.width,height:target.height};
 }
 function forceCameraFullscreen(){
-const vv=window.visualViewport;
-const vw=(vv&&vv.width)||document.documentElement.clientWidth||window.innerWidth;
-const vh=(vv&&vv.height)||document.documentElement.clientHeight||window.innerHeight;
-const sw=camera.videoWidth||vw;
-const sh=camera.videoHeight||vh;
-const scale=Math.max(vw/sw,vh/sh);
-camera.style.width=sw+"px";
-camera.style.height=sh+"px";
-camera.style.left=(vw/2)+"px";
-camera.style.top=(vh/2)+"px";
+// Keep the live preview exactly like the original v24 fullscreen camera.
+// Do not alter video dimensions, object-fit, transform or viewport geometry.
+camera.style.width="100%";
+camera.style.height="100%";
+camera.style.left="0";
+camera.style.top="0";
 camera.style.right="auto";
 camera.style.bottom="auto";
-camera.style.objectFit="fill";
-camera.style.transform="translate(-50%,-50%) scale("+scale+")";
+camera.style.objectFit="cover";
+camera.style.objectPosition="center center";
+camera.style.transform="none";
 }
 function scheduleCameraFullscreen(){
 forceCameraFullscreen();
