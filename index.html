@@ -21,7 +21,8 @@ font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display","Helvetica Neue",A
 body{touch-action:manipulation}
 #app{position:fixed;inset:0;background:#050505;overflow:hidden}
 #camera{
-position:absolute;left:0;top:0;width:100%;height:100%;
+position:fixed;inset:0;width:100vw;height:100vh;
+min-width:100%;min-height:100%;
 object-fit:cover;background:#111;z-index:1;
 transform:none;
 transform-origin:center center;
@@ -462,7 +463,6 @@ videoOrientation=btn.dataset.orientation;
 localStorage.setItem("dmMotionVideoOrientation",videoOrientation);
 recordingPortrait=videoOrientation==="portrait";
 updateSettingsUI();
-lockScreenOrientation();
 }));
 function setStatus(t){statusDisplay.textContent=t}
 function resetValues(){
@@ -960,7 +960,10 @@ recordedFileName="";
 recordingMimeType="";
 running=true;
 recordingPortrait=videoOrientation==="portrait";
-await lockScreenOrientation();
+// Do NOT lock Safari's screen orientation when recording starts.
+// iOS can recalculate the visual viewport and leave black bars around the
+// live camera until the phone is rotated again. The recording orientation
+// is already fixed by the canvas dimensions, so no screen lock is needed.
 startButton.textContent="STOP DRIVE";
 startButton.classList.add("stop");
 recordBadge.style.display="flex";
