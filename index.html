@@ -21,9 +21,11 @@ font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display","Helvetica Neue",A
 body{touch-action:manipulation}
 #app{position:fixed;inset:0;background:#050505;overflow:hidden}
 #camera{
-position:fixed;inset:0;width:100vw;height:100vh;
-min-width:100%;min-height:100%;
-object-fit:cover;background:#111;z-index:1;
+position:fixed;inset:0;width:100%;height:100%;
+min-width:0;min-height:0;
+object-fit:cover;
+object-position:center center;
+display:block;background:#111;z-index:1;
 transform:none;
 transform-origin:center center;
 transition:none;
@@ -404,6 +406,17 @@ return recordingPortrait
 ? {width:target.height,height:target.width}
 : {width:target.width,height:target.height};
 }
+function forceCameraFullscreen(){
+const vv=window.visualViewport;
+const w=(vv&&vv.width)||document.documentElement.clientWidth||window.innerWidth;
+const h=(vv&&vv.height)||document.documentElement.clientHeight||window.innerHeight;
+camera.style.width=w+"px";
+camera.style.height=h+"px";
+camera.style.left="0px";
+camera.style.top="0px";
+camera.style.right="auto";
+camera.style.bottom="auto";
+}
 function applyPreviewOrientation(){
 /* Keep the live camera preview fullscreen. The selected video orientation
 is used by the recording canvas; the live <video> itself must never be
@@ -412,6 +425,7 @@ different screen angle. */
 camera.style.setProperty("--preview-rotation","0deg");
 camera.classList.remove("orientationLocked");
 camera.dataset.orientation=videoOrientation;
+forceCameraFullscreen();
 }
 async function lockScreenOrientation(){
 try{
@@ -787,6 +801,8 @@ setStatus("AUFNAHMEFEHLER");
 };
 mediaRecorder.onstop=()=>{
 stopRecordingCanvas();
+forceCameraFullscreen();
+setTimeout(forceCameraFullscreen,120);
 if(!recordedChunks.length){
 setStatus("KEIN VIDEO ERSTELLT");
 return;
@@ -800,6 +816,9 @@ saveVideoButton.style.display="block";
 setStatus("VIDEO BEREIT • TELEMETRIE ENTHALTEN");
 };
 mediaRecorder.start(1000);
+forceCameraFullscreen();
+requestAnimationFrame(forceCameraFullscreen);
+setTimeout(forceCameraFullscreen,120);
 return true;
 }catch(error){
 console.log("Recorder start:",error);
@@ -1029,10 +1048,10 @@ updateSettingsUI();
 prepareSaveButton();
 resetValues();
 window.addEventListener("orientationchange",()=>{
-setTimeout(applyPreviewOrientation,80);
+setTimeout(()=>{applyPreviewOrientation();forceCameraFullscreen();},80);
 });
 window.addEventListener("resize",()=>{
-setTimeout(applyPreviewOrientation,80);
+setTimeout(()=>{applyPreviewOrientation();forceCameraFullscreen();},80);
 });
 document.addEventListener("visibilitychange",()=>{
 if(!document.hidden && driveModeOpen){
