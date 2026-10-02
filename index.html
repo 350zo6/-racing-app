@@ -154,12 +154,24 @@ border-bottom:1px solid rgba(255,255,255,.08);
 color:#fff;font-size:15px;text-align:left;
 }
 .item span{color:#666;font-size:20px}
-/* Fixed Drive Orientation */
-#app{transform-origin:center center;will-change:transform,width,height;}
-#app.fixed-portrait{width:100vw;height:100vh;transform:none;}
-#app.fixed-landscape{width:100vh;height:100vw;position:absolute;left:50%;top:50%;transform:translate(-50%,-50%) rotate(90deg);}
-#app.fixed-landscape #camera,#app.fixed-landscape #shade,#app.fixed-landscape #placeholder{width:100%;height:100%;}
-#app.fixed-landscape #header,#app.fixed-landscape #hud,#app.fixed-landscape #status,#app.fixed-landscape #controls,#app.fixed-landscape #rec,#app.fixed-landscape #menuBtn,#
+/* Fixed logical Drive frame: physical phone rotation never changes the selected frame. */
+#app{position:fixed;left:50%;top:50%;inset:auto;transform:translate(-50%,-50%);transform-origin:center center;overflow:hidden;background:#050505;}
+#app.fixed-portrait{
+width:min(100vw,56.25vh);
+height:min(100vh,177.7778vw);
+transform:translate(-50%,-50%);
+}
+#app.fixed-landscape{
+width:min(100vw,177.7778vh);
+height:min(100vh,56.25vw);
+transform:translate(-50%,-50%);
+}
+#app.fixed-portrait #hud{grid-template-columns:repeat(2,1fr);}
+#app.fixed-landscape #hud{grid-template-columns:repeat(4,1fr);}
+#app.fixed-portrait #header{padding:0 18px;height:78px;}
+#app.fixed-landscape #header{padding:0 24px;height:82px;}
+#app.fixed-landscape #logo{font-size:23px;}
+#app.fixed-landscape #tagline{font-size:8px;}
 #app.drive-hidden{visibility:hidden;}
 #settingsPanel{
 position:absolute;inset:0;z-index:120;display:none;
@@ -203,65 +215,6 @@ display:flex;justify-content:space-between;gap:12px;align-items:center;
 #settingsSummaryValue{font-size:11px;font-weight:850}
 @media (max-width:600px){
 .settingsSheet{width:calc(100vw - 24px);padding-left:16px;padding-right:16px}
-}
-@media (max-width:600px) and (orientation:portrait){
-#hud{grid-template-columns:repeat(2,1fr)}
-#speed{font-size:45px}
-}
-@media (orientation:landscape){
-#header{
-padding:0 24px;height:82px;
-}
-#logo{font-size:23px}
-#tagline{font-size:8px}
-/* Speed gets its own space; menu sits separately at the far right. */
-#speedBox{
-position:absolute;
-right:82px;
-top:0;
-}
-#speed{font-size:44px}
-#speedUnit{font-size:9px}
-#rec{left:24px;top:calc(68px + var(--safe-top))}
-#menuBtn{
-right:22px;
-top:calc(16px + var(--safe-top));
-width:42px;height:42px;
-}
-/* Telemetry becomes a clean right-side rail instead of floating in the middle. */
-#hud{
-left:auto;
-right:22px;
-top:auto;
-bottom:calc(18px + var(--safe-bottom));
-width:min(300px,31vw);
-grid-template-columns:1fr 1fr;
-gap:7px;
-}
-.card{
-min-height:62px;
-padding:7px 9px;
-border-radius:11px;
-}
-.label{
-font-size:7px;
-letter-spacing:1.7px;
-}
-.value{
-margin-top:3px;
-font-size:13px;
-letter-spacing:-.2px;
-}
-#controls{
-left:22px;right:auto;
-bottom:calc(18px + var(--safe-bottom));
-justify-content:flex-start;
-}
-#start{width:min(330px,38vw);height:54px}
-#status{
-left:22px;transform:none;
-bottom:calc(79px + var(--safe-bottom));
-}
 }
 </style>
 </head>
