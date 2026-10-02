@@ -31,10 +31,10 @@ Drive surface in the selected aspect/orientation instead of following the
 browser viewport. Portrait stays portrait (centered with black side bars
 in a landscape viewport); landscape rotates into the available viewport. */
 #app.orientationForcePortrait{
-/* In a physical landscape viewport, the portrait Drive surface is a
-landscape-sized box that is rotated into portrait. This fills the
-complete screen instead of creating a small portrait window. */
-width:100vw;height:100vh;
+/* Physical viewport is landscape, but Drive is locked to portrait.
+Build a portrait surface first, then rotate the whole surface into
+the landscape viewport. */
+width:100vh;height:100vw;
 transform:translate(-50%,-50%) rotate(-90deg);
 }
 #app.orientationForcePortrait #camera{
@@ -467,8 +467,10 @@ return recordingPortrait
 : {width:target.width,height:target.height};
 }
 function applyPreviewOrientation(){
-const orientationType=(screen.orientation && screen.orientation.type) ? screen.orientation.type : "";
-const viewportLandscape=orientationType ? orientationType.startsWith("landscape") : (window.innerWidth>window.innerHeight);
+/* Use the actual CSS viewport dimensions. Do not use screen.orientation.type:
+on iOS Safari it can remain locked/stale after a previous orientation lock
+and can falsely report landscape while the visible viewport is portrait. */
+const viewportLandscape=window.innerWidth>window.innerHeight;
 const targetLandscape=driveDisplayOrientation==="landscape";
 /* The selected Drive orientation is authoritative. Only add the CSS
 orientation surface when the physical viewport differs from the selection.
