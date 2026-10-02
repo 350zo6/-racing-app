@@ -20,16 +20,8 @@ font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display","Helvetica Neue",A
 }
 body{touch-action:manipulation}
 #app{position:fixed;inset:0;background:#050505;overflow:hidden}
-#camera{
-position:absolute;left:0;top:0;width:100%;height:100%;
-object-fit:cover;background:#111;z-index:1;
-transform:rotate(var(--preview-rotation,0deg));
-transform-origin:center center;
-transition:none;
-}
-#camera.orientationLocked{
-will-change:transform;
-}
+#camera{position:absolute;left:0;top:0;width:100%;height:100%;object-fit:cover;background:#111;z-index:0;opacity:0;pointer-events:none;}
+#previewCanvas{position:absolute;left:0;top:0;width:100%;height:100%;z-index:1;display:block;background:#111;pointer-events:none;}
 #shade{
 position:absolute;left:0;top:0;width:100%;height:100%;z-index:2;
 pointer-events:none;
@@ -267,6 +259,7 @@ bottom:calc(79px + var(--safe-bottom));
 <body>
 <div id="app">
 <video id="camera" autoplay playsinline muted></video>
+<canvas id="previewCanvas"></canvas>
 <div id="shade"></div>
 <div id="placeholder">CAMERA READY</div>
 <div id="header">
@@ -404,31 +397,32 @@ return recordingPortrait
 : {width:target.width,height:target.height};
 }
 function applyPreviewOrientation(){
-const angle=(screen.orientation && typeof screen.orientation.angle==="number")
-? screen.orientation.angle
-: (window.orientation || 0);
-const targetPortrait=videoOrientation==="portrait";
-let rotation=0;
-if(targetPortrait){
-if(angle===90) rotation=-90;
-else if(angle===270) rotation=90;
-else if(angle===180) rotation=180;
-}else{
-if(angle===0 || angle===180) rotation=90;
-else rotation=0;
-}
-camera.style.setProperty("--preview-rotation",rotation+"deg");
-camera.classList.toggle("orientationLocked",true);
+camera.style.setProperty("--preview-rotation","0deg");
+camera.classList.remove("orientationLocked");
 camera.dataset.orientation=videoOrientation;
+resizePreviewCanvas();
+}
+function resizePreviewCanvas(){
+const c=document.getElementById("previewCanvas"); if(!c)return;
+const dpr=Math.min(window.devicePixelRatio||1,2);
+const w=Math.max(1,Math.round(window.innerWidth*dpr));
+const h=Math.max(1,Math.round(window.innerHeight*dpr));
+if(c.width!==w)c.width=w; if(c.height!==h)c.height=h;
+}
+function drawPreviewFrame(){
+const c=document.getElementById("previewCanvas"); if(!c)return;
+resizePreviewCanvas();
+const ctx=c.getContext("2d",{alpha:false}); const cw=c.width,ch=c.height;
+if(camera.readyState>=2 && camera.videoWidth && camera.videoHeight){
+const sw=camera.videoWidth,sh=camera.videoHeight;
+const scale=Math.max(cw/sw,ch/sh);
+const dw=sw*scale,dh=sh*scale;
+ctx.fillStyle="#000";ctx.fillRect(0,0,cw,ch);ctx.drawImage(camera,(cw-dw)/2,(ch-dh)/2,dw,dh);
+} else { ctx.fillStyle="#111";ctx.fillRect(0,0,cw,ch); }
+requestAnimationFrame(drawPreviewFrame);
 }
 async function lockScreenOrientation(){
-try{
-if(screen.orientation && typeof screen.orientation.lock==="function"){
-await screen.orientation.lock(videoOrientation==="portrait" ? "portrait" : "landscape");
-}
-}catch(error){
-console.log("Orientation lock:",error);
-}
+// Never lock Safari's physical screen. Recording orientation is handled by the saved-video canvas.
 applyPreviewOrientation();
 }
 function updatePreviewOrientation(){
@@ -951,6 +945,7 @@ if(mediaRecorder && mediaRecorder.state!=="inactive"){
 mediaRecorder.stop();
 }
 resetValues();
+applyPreviewOrientation();
 if(!recordedBlob)setStatus("VIDEO WIRD VERARBEITET...");
 else setStatus("KAMERA • BEREIT");
 }
@@ -968,6 +963,7 @@ recordedFileName="";
 recordingMimeType="";
 running=true;
 recordingPortrait=videoOrientation==="portrait";
+await lockScreenOrientation();
 startButton.textContent="STOP DRIVE";
 startButton.classList.add("stop");
 recordBadge.style.display="flex";
@@ -1032,11 +1028,13 @@ if(e.target===settingsPanel)closeSettings();
 updateSettingsUI();
 prepareSaveButton();
 resetValues();
+resizePreviewCanvas();
+requestAnimationFrame(drawPreviewFrame);
 window.addEventListener("orientationchange",()=>{
-setTimeout(applyPreviewOrientation,80);
+setTimeout(()=>{resizePreviewCanvas();applyPreviewOrientation();},80);
 });
 window.addEventListener("resize",()=>{
-setTimeout(applyPreviewOrientation,80);
+setTimeout(()=>{resizePreviewCanvas();applyPreviewOrientation();},80);
 });
 document.addEventListener("visibilitychange",()=>{
 if(!document.hidden && driveModeOpen){
