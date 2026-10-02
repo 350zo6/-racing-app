@@ -324,14 +324,6 @@ G</b></div><div class="gmini"><span>ACCEL</span><b id="gAccel">0.00 G</b></div><
 </div>
 </div>
 <div class="settingHint">Die gewählte Bildrate wird für die nächste Aufnahme verwendet.</div>
-<div class="settingGroup">
-<div class="settingLabel">VIDEO-AUSRICHTUNG</div>
-<div class="settingOptions fpsOptions">
-<button class="settingOption" data-orientation="portrait">HOCHFORMAT</button>
-<button class="settingOption" data-orientation="landscape">QUERFORMAT</button>
-</div>
-<div class="settingHint">Die Ausrichtung wird vor der Aufnahme festgelegt und bleibt während der gesamten Aufnahme unverändert.</div>
-</div>
 <div class="settingsSummary">
 <span>AKTUELLE AUFNAHME</span>
 <strong id="settingsSummaryValue">1080p / 30 FPS</strong>
@@ -373,10 +365,8 @@ const closeSettingsButton=document.getElementById("closeSettings");
 const settingsSummaryValue=document.getElementById("settingsSummaryValue");
 const qualityButtons=[...document.querySelectorAll("[data-quality]")];
 const fpsButtons=[...document.querySelectorAll("[data-fps]")];
-const orientationButtons=[...document.querySelectorAll("[data-orientation]")];
 let videoQuality=localStorage.getItem("dmMotionVideoQuality") || "1080p";
 let videoFps=Number(localStorage.getItem("dmMotionVideoFps") || "30");
-let videoOrientation=localStorage.getItem("dmMotionVideoOrientation") || "portrait";
 let previewStream=null;
 let driveModeOpen=true;
 const QUALITY_MAP={
@@ -384,22 +374,18 @@ const QUALITY_MAP={
 "2K":{width:2560,height:1440},
 "4K":{width:3840,height:2160}
 };
-// The recording orientation is selected in Settings before the drive.
-// It never changes while recording, even if the phone is physically rotated.
-let recordingPortrait=videoOrientation==="portrait";
+// The recording orientation is determined by the phone orientation at START.
+// It stays fixed for the entire recording.
+let recordingPortrait=window.innerHeight > window.innerWidth;
 let recordingDrawCounter=0;
 let recordingDrawEvery=1;
 function getRecordingDimensions(){
 const target=QUALITY_MAP[videoQuality] || QUALITY_MAP["1080p"];
-recordingPortrait=videoOrientation==="portrait";
 return recordingPortrait
 ? {width:target.height,height:target.width}
 : {width:target.width,height:target.height};
 }
 function applyPreviewOrientation(){
-camera.style.setProperty("--preview-rotation","0deg");
-camera.classList.remove("orientationLocked");
-camera.dataset.orientation=videoOrientation;
 resizePreviewCanvas();
 }
 function resizePreviewCanvas(){
@@ -438,8 +424,7 @@ recordingDrawCounter=0;
 function updateSettingsUI(){
 qualityButtons.forEach(btn=>btn.classList.toggle("selected",btn.dataset.quality===videoQuality));
 fpsButtons.forEach(btn=>btn.classList.toggle("selected",Number(btn.dataset.fps)===videoFps));
-orientationButtons.forEach(btn=>btn.classList.toggle("selected",btn.dataset.orientation===videoOrientation));
-settingsSummaryValue.textContent=`${videoQuality} / ${videoFps} FPS / ${videoOrientation==="portrait" ? "HOCHFORMAT" : "QUERFORMAT"}`;
+settingsSummaryValue.textContent=`${videoQuality} / ${videoFps} FPS`;
 applyPreviewOrientation();
 }
 function openSettings(){
@@ -458,14 +443,6 @@ fpsButtons.forEach(btn=>btn.addEventListener("click",()=>{
 videoFps=Number(btn.dataset.fps);
 localStorage.setItem("dmMotionVideoFps",String(videoFps));
 updateSettingsUI();
-}));
-orientationButtons.forEach(btn=>btn.addEventListener("click",()=>{
-if(running)return;
-videoOrientation=btn.dataset.orientation;
-localStorage.setItem("dmMotionVideoOrientation",videoOrientation);
-recordingPortrait=videoOrientation==="portrait";
-updateSettingsUI();
-lockScreenOrientation();
 }));
 function setStatus(t){statusDisplay.textContent=t}
 function resetValues(){
@@ -962,7 +939,7 @@ recordedChunks=[];
 recordedFileName="";
 recordingMimeType="";
 running=true;
-recordingPortrait=videoOrientation==="portrait";
+recordingPortrait=window.innerHeight > window.innerWidth;
 await lockScreenOrientation();
 startButton.textContent="STOP DRIVE";
 startButton.classList.add("stop");
