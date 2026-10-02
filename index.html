@@ -21,12 +21,12 @@ font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display","Helvetica Neue",A
 body{touch-action:manipulation}
 #app{position:fixed;inset:0;background:#050505;overflow:hidden}
 #camera{
-position:fixed;inset:0;width:100%;height:100%;
+position:fixed;left:50%;top:50%;width:100%;height:100%;
 min-width:0;min-height:0;
-object-fit:cover;
+object-fit:fill;background:#111;z-index:1;
 object-position:center center;
-display:block;background:#111;z-index:1;
-transform:none;
+display:block;
+transform:translate(-50%,-50%);
 transform-origin:center center;
 transition:none;
 }
@@ -408,14 +408,24 @@ return recordingPortrait
 }
 function forceCameraFullscreen(){
 const vv=window.visualViewport;
-const w=(vv&&vv.width)||document.documentElement.clientWidth||window.innerWidth;
-const h=(vv&&vv.height)||document.documentElement.clientHeight||window.innerHeight;
-camera.style.width=w+"px";
-camera.style.height=h+"px";
-camera.style.left="0px";
-camera.style.top="0px";
+const vw=(vv&&vv.width)||document.documentElement.clientWidth||window.innerWidth;
+const vh=(vv&&vv.height)||document.documentElement.clientHeight||window.innerHeight;
+const sw=camera.videoWidth||vw;
+const sh=camera.videoHeight||vh;
+const scale=Math.max(vw/sw,vh/sh);
+camera.style.width=sw+"px";
+camera.style.height=sh+"px";
+camera.style.left=(vw/2)+"px";
+camera.style.top=(vh/2)+"px";
 camera.style.right="auto";
 camera.style.bottom="auto";
+camera.style.objectFit="fill";
+camera.style.transform="translate(-50%,-50%) scale("+scale+")";
+}
+function scheduleCameraFullscreen(){
+forceCameraFullscreen();
+requestAnimationFrame(forceCameraFullscreen);
+setTimeout(forceCameraFullscreen,120);
 }
 function applyPreviewOrientation(){
 /* Keep the live camera preview fullscreen. The selected video orientation
@@ -801,8 +811,7 @@ setStatus("AUFNAHMEFEHLER");
 };
 mediaRecorder.onstop=()=>{
 stopRecordingCanvas();
-forceCameraFullscreen();
-setTimeout(forceCameraFullscreen,120);
+scheduleCameraFullscreen();
 if(!recordedChunks.length){
 setStatus("KEIN VIDEO ERSTELLT");
 return;
@@ -816,9 +825,7 @@ saveVideoButton.style.display="block";
 setStatus("VIDEO BEREIT • TELEMETRIE ENTHALTEN");
 };
 mediaRecorder.start(1000);
-forceCameraFullscreen();
-requestAnimationFrame(forceCameraFullscreen);
-setTimeout(forceCameraFullscreen,120);
+scheduleCameraFullscreen();
 return true;
 }catch(error){
 console.log("Recorder start:",error);
@@ -870,6 +877,7 @@ if(previewStream){
 camera.srcObject=previewStream;
 placeholder.style.display="none";
 applyPreviewOrientation();
+scheduleCameraFullscreen();
 return true;
 }
 try{
@@ -891,6 +899,7 @@ setTimeout(resolve,1200);
 });
 }
 applyPreviewOrientation();
+scheduleCameraFullscreen();
 return true;
 }catch(error){
 console.log("Camera:",error);
@@ -903,6 +912,7 @@ camera.playsInline=true;
 placeholder.style.display="none";
 await camera.play().catch(()=>{});
 applyPreviewOrientation();
+scheduleCameraFullscreen();
 return true;
 }catch(fallbackError){
 console.log("Camera fallback:",fallbackError);
@@ -1048,10 +1058,10 @@ updateSettingsUI();
 prepareSaveButton();
 resetValues();
 window.addEventListener("orientationchange",()=>{
-setTimeout(()=>{applyPreviewOrientation();forceCameraFullscreen();},80);
+setTimeout(()=>{applyPreviewOrientation();scheduleCameraFullscreen();},80);
 });
 window.addEventListener("resize",()=>{
-setTimeout(()=>{applyPreviewOrientation();forceCameraFullscreen();},80);
+setTimeout(()=>{applyPreviewOrientation();scheduleCameraFullscreen();},80);
 });
 document.addEventListener("visibilitychange",()=>{
 if(!document.hidden && driveModeOpen){
