@@ -16,68 +16,13 @@
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 html,body{
 margin:0;width:100%;height:100%;overflow:hidden;background:#050505;color:#fff;
-font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display"
-,
-"Helvetica Neue",Arial,sans-serif;
+font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display","Helvetica Neue",Arial,sans-serif;
 }
 body{touch-action:manipulation}
-#app{position:fixed;inset:0;background:#050505;overflow:hidden;transform:none;transform-origin:center center;}
-/* Safari on iPhone cannot reliably lock the browser viewport orientation.
-Rotate the complete Drive UI when the selected orientation differs from
-the current viewport. Camera, HUD, buttons and overlays stay together. */
-#app.orientationForce{
-left:50%;top:50%;right:auto;bottom:auto;inset:auto;
-}
-/* When the physical phone is rotated away from the selected mode, keep the
-Drive surface in the selected aspect/orientation instead of following the
-browser viewport. Portrait stays portrait (centered with black side bars
-in a landscape viewport); landscape rotates into the available viewport. */
-#app.orientationForcePortrait{
-/* Fixed portrait Drive surface inside a landscape Safari viewport.
-Dimensions come from visualViewport so Safari's toolbar/dynamic viewport
-cannot shrink this into the small window seen on earlier versions. */
-width:var(--vvh,100vh);height:var(--vvw,100vw);
-transform:translate(-50%,-50%) rotate(-90deg);
-}
-#app.orientationForcePortrait.orientationRight{
-transform:translate(-50%,-50%) rotate(90deg);
-}
-#app.orientationForcePortrait #camera{
-width:100%;height:100%;object-fit:cover;transform:none;
-}
-#app.orientationForceLandscape{
-width:var(--vvh,100vh);height:var(--vvw,100vw);
-transform:translate(-50%,-50%) rotate(90deg);
-}
-#app.orientationForceLandscape #camera{
-width:100%;height:100%;object-fit:cover;transform:none;
-}
-/* Navigation is always presented as a portrait UI, even when Drive is in landscape. */
-#app.orientationForceLandscape #menu,
-#app.orientationForceLandscape #settingsPanel{
-left:50%;right:auto;top:50%;bottom:auto;
-width:100vw;height:100vh;
-inset:auto;
-transform:translate(-50%,-50%) rotate(-90deg);
-}
-#app.orientationForceLandscape #menu .panel{height:100vh;}
-#app.orientationForceLandscape #settingsPanel .settingsSheet{max-height:calc(100vh - 48px);}
-#app.navigationOpen #menu,
-#app.navigationOpen #settingsPanel{transform:translate(-50%,-50%) rotate(-90deg);}
-@media (orientation:landscape){
-#app.navigationOpen #menu,
-#app.navigationOpen #settingsPanel{
-left:50%;right:auto;top:50%;bottom:auto;
-width:100vw;height:100vh;
-inset:auto;
-transform:translate(-50%,-50%) rotate(-90deg);
-}
-}
+#app{position:fixed;inset:0;background:#050505;overflow:hidden}
 #camera{
 position:absolute;left:0;top:0;width:100%;height:100%;
 object-fit:cover;background:#111;z-index:1;
-transform:none;
-pointer-events:none;
 }
 #shade{
 position:absolute;left:0;top:0;width:100%;height:100%;z-index:2;
@@ -171,9 +116,8 @@ box-shadow:0 10px 35px rgba(0,0,0,.35);
 #saveVideo:active{transform:translate(-50%,-50%) scale(.98)}
 #controls{
 position:absolute;left:0;right:0;bottom:calc(9px + var(--safe-bottom));
-z-index:20;display:flex;justify-content:center;pointer-events:auto;
+z-index:20;display:flex;justify-content:center;
 }
-#start,#menuBtn,#saveVideo,.item,.close,.settingsClose,.settingOption{pointer-events:auto;touch-action:manipulation;}
 #start{
 width:calc(100% - 32px);max-width:520px;height:58px;
 border:0;border-radius:18px;
@@ -210,6 +154,13 @@ border-bottom:1px solid rgba(255,255,255,.08);
 color:#fff;font-size:15px;text-align:left;
 }
 .item span{color:#666;font-size:20px}
+/* Fixed Drive Orientation */
+#app{transform-origin:center center;will-change:transform,width,height;}
+#app.fixed-portrait{width:100vw;height:100vh;transform:none;}
+#app.fixed-landscape{width:100vh;height:100vw;position:absolute;left:50%;top:50%;transform:translate(-50%,-50%) rotate(90deg);}
+#app.fixed-landscape #camera,#app.fixed-landscape #shade,#app.fixed-landscape #placeholder{width:100%;height:100%;}
+#app.fixed-landscape #header,#app.fixed-landscape #hud,#app.fixed-landscape #status,#app.fixed-landscape #controls,#app.fixed-landscape #rec,#app.fixed-landscape #menuBtn,#
+#app.drive-hidden{visibility:hidden;}
 #settingsPanel{
 position:absolute;inset:0;z-index:120;display:none;
 background:rgba(0,0,0,.76);
@@ -234,7 +185,7 @@ box-shadow:0 25px 80px rgba(0,0,0,.55);
 .fpsOptions{grid-template-columns:repeat(2,1fr)}
 .settingOption{
 min-height:54px;border:1px solid rgba(255,255,255,.14);border-radius:13px;
-background:rgba(255,255,255,.035);color:#fff;font:800 13px -apple-system,BlinkMacSystemFont,"SF Pro Display"
+background:rgba(255,255,255,.035);color:#fff;font:800 13px -apple-system,BlinkMacSystemFont,"SF Pro Display","Helvetica
 Neue",Arial,sans-serif;
 letter-spacing:.5px;
 }
@@ -312,26 +263,6 @@ left:22px;transform:none;
 bottom:calc(79px + var(--safe-bottom));
 }
 }
-,
-"Helvetica
-/* When Safari keeps the browser viewport portrait, the forced-landscape app
-has landscape dimensions internally, so mirror the normal landscape UI rules. */
-#app.orientationForceLandscape #header{padding:0 24px;height:82px}
-#app.orientationForceLandscape #logo{font-size:23px}
-#app.orientationForceLandscape #tagline{font-size:8px}
-#app.orientationForceLandscape #speedBox{position:absolute;right:82px;top:0}
-#app.orientationForceLandscape #speed{font-size:44px}
-#app.orientationForceLandscape #speedUnit{font-size:9px}
-#app.orientationForceLandscape #rec{left:24px;top:calc(68px + var(--safe-top))}
-#app.orientationForceLandscape #menuBtn{right:22px;top:calc(16px + var(--safe-top));width:42px;height:42px}
-#app.orientationForceLandscape #hud{left:auto;right:22px;top:auto;bottom:calc(18px +
-var(--safe-bottom));width:min(300px,31vw);grid-template-columns:1fr 1fr;gap:7px}
-#app.orientationForceLandscape .card{min-height:62px;padding:7px 9px;border-radius:11px}
-#app.orientationForceLandscape .label{font-size:7px;letter-spacing:1.7px}
-#app.orientationForceLandscape .value{margin-top:3px;font-size:13px;letter-spacing:-.2px}
-#app.orientationForceLandscape #controls{left:22px;right:auto;bottom:calc(18px + var(--safe-bottom));justify-content:flex-start}
-#app.orientationForceLandscape #start{width:min(330px,38vw);height:54px}
-#app.orientationForceLandscape #status{left:22px;transform:none;bottom:calc(79px + var(--safe-bottom))}
 </style>
 </head>
 <body>
@@ -350,7 +281,7 @@ var(--safe-bottom));width:min(300px,31vw);grid-template-columns:1fr 1fr;gap:7px}
 </div>
 </div>
 <div id="rec"><span id="recDot"></span>REC</div>
-<button id="menuBtn" aria-label="Menü"> </button>
+<button id="menuBtn" aria-label="Menü">■</button>
 <div id="hud">
 <div class="card"><div class="label">GPS</div><div class="value" id="gps">BEREIT</div></div>
 <div class="card" id="gforceCard"><div class="label">G-KRAFT</div><div class="value" id="gforce"><div
@@ -399,15 +330,15 @@ G</b></div><div class="gmini"><span>ACCEL</span><b id="gAccel">0.00 G</b></div><
 <button class="settingOption" data-fps="30">30 FPS</button>
 <button class="settingOption" data-fps="60">60 FPS</button>
 </div>
-</div>
 <div class="settingHint">Die gewählte Bildrate wird für die nächste Aufnahme verwendet.</div>
+</div>
 <div class="settingGroup">
 <div class="settingLabel">VIDEO-AUSRICHTUNG</div>
 <div class="settingOptions fpsOptions">
 <button class="settingOption" data-orientation="portrait">HOCHFORMAT</button>
 <button class="settingOption" data-orientation="landscape">QUERFORMAT</button>
 </div>
-<div class="settingHint">Die Ausrichtung wird vor der Aufnahme festgelegt und bleibt während der gesamten Aufnahme unverändert.</div>
+<div class="settingHint">Die gewählte Ausrichtung gilt für die komplette nächste Fahrt und bleibt während der Aufnahme fest.</div>
 </div>
 <div class="settingsSummary">
 <span>AKTUELLE AUFNAHME</span>
@@ -417,7 +348,6 @@ G</b></div><div class="gmini"><span>ACCEL</span><b id="gAccel">0.00 G</b></div><
 </div>
 </div>
 <script>
-const app=document.getElementById("app");
 const camera=document.getElementById("camera");
 const placeholder=document.getElementById("placeholder");
 const startButton=document.getElementById("start");
@@ -455,16 +385,14 @@ const orientationButtons=[...document.querySelectorAll("[data-orientation]")];
 let videoQuality=localStorage.getItem("dmMotionVideoQuality") || "1080p";
 let videoFps=Number(localStorage.getItem("dmMotionVideoFps") || "30");
 let videoOrientation=localStorage.getItem("dmMotionVideoOrientation") || "portrait";
-let previewStream=null;
-let driveModeOpen=true;
-let driveDisplayOrientation="portrait";
+let driveDisplayOrientation=videoOrientation;
 const QUALITY_MAP={
 "1080p":{width:1920,height:1080},
 "2K":{width:2560,height:1440},
 "4K":{width:3840,height:2160}
 };
-// The recording orientation is selected in Settings before the drive.
-// It never changes while recording, even if the phone is physically rotated.
+// Orientation is selected in Settings and is fixed for the whole Drive.
+// Physical phone rotation never changes the recording format.
 let recordingPortrait=videoOrientation==="portrait";
 let recordingDrawCounter=0;
 let recordingDrawEvery=1;
@@ -475,83 +403,27 @@ return recordingPortrait
 ? {width:target.height,height:target.width}
 : {width:target.width,height:target.height};
 }
-function updateViewportMetrics(){
-const vv=window.visualViewport;
-const w=vv ? vv.width : window.innerWidth;
-const h=vv ? vv.height : window.innerHeight;
-document.documentElement.style.setProperty("--vvw", `${w}px`);
-document.documentElement.style.setProperty("--vvh", `${h}px`);
-return {width:w,height:h};
+function applyDriveOrientation(){
+const app=document.getElementById("app");
+if(!app)return;
+app.classList.remove("fixed-portrait","fixed-landscape");
+app.classList.add(driveDisplayOrientation==="landscape" ? "fixed-landscape" : "fixed-portrait");
 }
-function getPhysicalOrientation(){
-/* Use the actual visible Safari viewport. Do not use window.orientation: on
-iPhone Safari it can remain stale after a previous orientation lock. */
-const {width,height}=updateViewportMetrics();
-return width>height ? "landscape" : "portrait";
+function showPortraitNavigation(){
+const app=document.getElementById("app");
+if(!app)return;
+app.classList.remove("fixed-landscape","fixed-portrait");
+app.style.width="100vw";
+app.style.height="100vh";
+app.style.position="fixed";
+app.style.left="0";app.style.top="0";app.style.transform="none";
 }
-function getPhysicalAngle(){
-const {width,height}=updateViewportMetrics();
-if(width<=height)return 0;
-const angle=(screen.orientation && typeof screen.orientation.angle==="number")
-? screen.orientation.angle
-: Number(window.orientation);
-return (angle===270 || angle===90) ? angle : 90;
+function restoreDriveOrientation(){
+const app=document.getElementById("app");
+if(!app)return;
+applyDriveOrientation();
 }
-function applyPreviewOrientation(){
-const physicalOrientation=getPhysicalOrientation();
-const viewportLandscape=physicalOrientation==="landscape";
-const targetLandscape=driveDisplayOrientation==="landscape";
-/* The selected Drive orientation is authoritative. Only add the CSS
-orientation surface when the physical viewport differs from the selection.
-Portrait is deliberately NOT rotated when the phone is turned: it remains
-a portrait canvas centered inside the landscape viewport. */
-const forceLandscape=targetLandscape && !viewportLandscape;
-const forcePortrait=!targetLandscape && viewportLandscape;
-app.classList.toggle("orientationForce",forceLandscape||forcePortrait);
-app.classList.toggle("orientationForceLandscape",forceLandscape);
-app.classList.toggle("orientationForcePortrait",forcePortrait);
-const physicalAngle=getPhysicalAngle();
-app.classList.toggle("orientationRight",forcePortrait && physicalAngle===270);
-app.dataset.orientation=driveDisplayOrientation;
-// Never rotate the camera element separately. The whole Drive UI is rotated
-// as one surface, which prevents the camera from ending up in a different
-// orientation than the telemetry and controls.
-camera.style.setProperty("--preview-rotation"
-,
-"0deg");
-camera.classList.remove("orientationLocked");
-}
-async function lockScreenOrientation(){
-/* Deliberately do not call screen.orientation.lock() in Safari. The app-level
-orientation surface below is the source of truth and avoids Safari leaving
-the viewport in a stale orientation state. */
-updateViewportMetrics();
-applyPreviewOrientation();
-}
-function updatePreviewOrientation(){
-if(driveModeOpen) applyPreviewOrientation();
-}
-function openNavigation(){
-document.getElementById("menu").classList.add("open");
-app.classList.add("navigationOpen");
-}
-function closeNavigation(){
-document.getElementById("menu").classList.remove("open");
-app.classList.remove("navigationOpen");
-}
-function openSettingsPortrait(){
-if(running)return;
-updateSettingsUI();
-closeNavigation();
-settingsPanel.classList.add("open");
-document.body.classList.add("settingsOpen");
-}
-function closeSettingsPortrait(){
-settingsPanel.classList.remove("open");
-document.body.classList.remove("settingsOpen");
-driveDisplayOrientation=videoOrientation;
-applyPreviewOrientation();
-}
+app.style.width="";app.style.height="";app.style.position="";app.style.left="";app.style.top="";app.style.transform="";
 function updateRecordingPerformance(){
 // 4K60 through a canvas is extremely demanding on iPhone Safari.
 // Keep 4K/60 available in Settings, but render the expensive 4K canvas
@@ -562,12 +434,20 @@ recordingDrawCounter=0;
 function updateSettingsUI(){
 qualityButtons.forEach(btn=>btn.classList.toggle("selected",btn.dataset.quality===videoQuality));
 fpsButtons.forEach(btn=>btn.classList.toggle("selected",Number(btn.dataset.fps)===videoFps));
-orientationButtons.forEach(btn=>btn.classList.toggle("selected",btn.dataset.orientation===videoOrientation));
-settingsSummaryValue.textContent=`${videoQuality} / ${videoFps} FPS / ${videoOrientation==="portrait" ? "HOCHFORMAT" : "QUERFORMAT"}`;
-applyPreviewOrientation();
+settingsSummaryValue.textContent=`${videoQuality} / ${videoFps} FPS • ${videoOrientation==="portrait" ? "HOCHFORMAT" : "QUERFORMAT"}`;
 }
-function openSettings(){ openSettingsPortrait(); }
-function closeSettings(){ closeSettingsPortrait(); }
+function openSettings(){
+if(running)return;
+showPortraitNavigation();
+updateSettingsUI();
+settingsPanel.classList.add("open");
+document.getElementById("menu").classList.remove("open");
+}
+function closeSettings(){
+settingsPanel.classList.remove("open");
+driveDisplayOrientation=videoOrientation;
+restoreDriveOrientation();
+}
 qualityButtons.forEach(btn=>btn.addEventListener("click",()=>{
 videoQuality=btn.dataset.quality;
 localStorage.setItem("dmMotionVideoQuality",videoQuality);
@@ -579,13 +459,9 @@ localStorage.setItem("dmMotionVideoFps",String(videoFps));
 updateSettingsUI();
 }));
 orientationButtons.forEach(btn=>btn.addEventListener("click",()=>{
-if(running)return;
 videoOrientation=btn.dataset.orientation;
 localStorage.setItem("dmMotionVideoOrientation",videoOrientation);
-recordingPortrait=videoOrientation==="portrait";
 updateSettingsUI();
-// The Settings screen itself remains portrait. The selected orientation is applied
-// to the Drive screen only after Settings is closed.
 }));
 function setStatus(t){statusDisplay.textContent=t}
 function resetValues(){
@@ -629,7 +505,9 @@ const dy=y-gravityY;
 const dz=z-gravityZ;
 // Map the phone axes to driving axes using the current screen orientation.
 // Assumption for this first version: phone top points roughly toward the car's front.
-const angle=getPhysicalAngle();
+const angle=(screen.orientation && typeof screen.orientation.angle === "number")
+? screen.orientation.angle
+: (window.orientation || 0);
 let lateral=dx;
 let longitudinal=dy;
 if(angle===90){ lateral=dy; longitudinal=-dx; }
@@ -678,14 +556,10 @@ return false;
 function chooseRecordingMimeType(){
 if(!window.MediaRecorder)return "";
 const types=[
-"video/mp4;codecs=avc1.64003E,mp4a.40.2"
-"video/mp4;codecs=avc1.42001E,mp4a.40.2"
-,
-,
-"video/mp4"
-,
-"video/webm;codecs=h264,opus"
-,
+"video/mp4;codecs=avc1.64003E,mp4a.40.2",
+"video/mp4;codecs=avc1.42001E,mp4a.40.2",
+"video/mp4",
+"video/webm;codecs=h264,opus",
 "video/webm"
 ];
 for(const type of types){
@@ -745,8 +619,9 @@ sy=(sourceH-sh)/2;
 }
 ctx.drawImage(camera,sx,sy,sw,sh,0,0,targetW,targetH);
 }
-// The saved video uses the fixed orientation selected in Settings.
-// The phone may rotate physically, but the recording canvas dimensions never change.
+// The live camera preview stays untouched. For the saved video we adapt the
+// camera buffer to the phone orientation, then fill the exact 9:16 or 16:9
+// recording canvas. This keeps the overlays inside the final video frame.
 if(recordingPortrait && sourceW>sourceH){
 ctx.save();
 ctx.translate(0,h);
@@ -919,11 +794,7 @@ return;
 const type=mediaRecorder.mimeType || recordingMimeType || "video/mp4";
 recordedBlob=new Blob(recordedChunks,{type});
 const extension=type.includes("webm") ? "webm" : "mp4";
-recordedFileName="DM_Motion_Telemetry_"+new Date().toISOString().replace(/[:.]/g,"
--
-")+"
-.
-"+extension;
+recordedFileName="DM_Motion_Telemetry_"+new Date().toISOString().replace(/[:.]/g,"-")+"."+extension;
 saveVideoButton.disabled=false;
 saveVideoButton.style.display="block";
 setStatus("VIDEO BEREIT • TELEMETRIE ENTHALTEN");
@@ -975,158 +846,44 @@ saveVideoButton.style.display="none";
 saveVideoButton.disabled=true;
 setStatus("VIDEO GESPEICHERT");
 }
-let cameraRequestPromise=null;
+let cameraRequest=null;
 let cameraReady=false;
-let cameraRequestId=0;
-async function attachCameraStream(stream){
-previewStream=stream;
-camera.setAttribute("autoplay"
-,
-"");
-camera.setAttribute("playsinline"
-,
-"");
-camera.muted=true;
-camera.playsInline=true;
-camera.srcObject=stream;
-try{await camera.play();}catch(error){console.log("Camera play:",error)}
-if(camera.readyState<2 || !camera.videoWidth || !camera.videoHeight){
-await new Promise(resolve=>{
-let finished=false;
-const finish=()=>{
-if(finished)return;
-finished=true;
-camera.removeEventListener("loadeddata",finish);
-camera.removeEventListener("playing",finish);
-resolve();
-};
-camera.addEventListener("loadeddata",finish,{once:true});
-camera.addEventListener("playing",finish,{once:true});
-setTimeout(finish,1200);
-});
-}
-cameraReady=!!(previewStream && previewStream.active && camera.videoWidth>0 && camera.videoHeight>0);
-if(cameraReady){
-placeholder.style.display="none";
-setStatus("KAMERA • BEREIT");
-applyPreviewOrientation();
-}
-return cameraReady;
-}
-function stopStream(stream){
-if(stream){
-stream.getTracks().forEach(track=>{
-try{track.stop();}catch(error){}
-});
-}
-}
-function getUserMediaWithTimeout(constraints,timeoutMs,requestId){
-return new Promise((resolve,reject)=>{
-let settled=false;
-const timer=setTimeout(()=>{
-if(settled)return;
-settled=true;
-reject(new DOMException("Camera request timed out"
-,
-"AbortError"));
-},timeoutMs);
-navigator.mediaDevices.getUserMedia(constraints).then(stream=>{
-if(settled || requestId!==cameraRequestId){
-stopStream(stream);
-return;
-}
-settled=true;
-clearTimeout(timer);
-resolve(stream);
-}).catch(error=>{
-if(settled)return;
-settled=true;
-clearTimeout(timer);
-reject(error);
-});
-});
+function cameraRequestWithTimeout(timeoutMs=8000){
+return Promise.race([
+navigator.mediaDevices.getUserMedia({video:{facingMode:{exact:"environment"}},audio:true}),
+new Promise((_,reject)=>setTimeout(()=>reject(new Error("CAMERA_TIMEOUT")),timeoutMs))
+]);
 }
 async function startCamera(){
-if(cameraReady && previewStream && previewStream.active){
-if(camera.srcObject!==previewStream)camera.srcObject=previewStream;
-try{await camera.play();}catch(error){}
+if(cameraReady && camera.srcObject && camera.srcObject.active)return true;
+if(cameraRequest)return cameraRequest;
+cameraRequest=(async()=>{
+try{
+// Keep the live camera request flexible. Resolution/FPS are applied only to the recording canvas.
+const stream=await cameraRequestWithTimeout(8000);
+camera.srcObject=stream;
+camera.muted=true;
+camera.playsInline=true;
 placeholder.style.display="none";
-applyPreviewOrientation();
+await camera.play().catch(()=>{});
+// Wait until Safari has delivered real camera frames before recording.
+if(camera.readyState<2){
+await new Promise(resolve=>{
+const done=()=>{camera.removeEventListener("loadeddata",done);resolve()};
+camera.addEventListener("loadeddata",done,{once:true});
+setTimeout(resolve,1200);
+});
+}
+cameraReady=true;
 return true;
-}
-if(cameraRequestPromise)return cameraRequestPromise;
-const requestId=++cameraRequestId;
-cameraRequestPromise=(async()=>{
-try{
-if(!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia){
-setStatus("KAMERA NICHT VERFÜGBAR");
-return false;
-}
-if(previewStream && !previewStream.active){
-stopStream(previewStream);
-previewStream=null;
-}
-setStatus("KAMERA • WIRD GESTARTET");
-let stream;
-try{
-// Keep the request deliberately simple. Do not force resolution/FPS here.
-// Those belong to the recording canvas.
-stream=await getUserMediaWithTimeout(
-{video:{facingMode:"environment"},audio:true},
-8000,
-requestId
-);
-}catch(error){
-console.log("Camera environment request:",error);
-// Only try the generic camera after a real, fast rejection. A timeout
-// means Safari may still have a pending permission request; do not stack
-// another request on top of it.
-if(error && error.name==="AbortError"){
-cameraReady=false;
-placeholder.style.display="flex";
-setStatus("KAMERA • ANTIPPEN");
-return false;
-}
-stream=await getUserMediaWithTimeout(
-{video:true,audio:true},
-8000,
-requestId
-);
-}
-if(requestId!==cameraRequestId){
-stopStream(stream);
-return false;
-}
-return await attachCameraStream(stream);
 }catch(error){
 console.log("Camera:",error);
-cameraReady=false;
-placeholder.style.display="flex";
-if(error && error.name==="NotAllowedError"){
-setStatus("KAMERA / MIKROFON • FREIGABE PRÜFEN");
-}else if(error && error.name==="NotFoundError"){
-setStatus("KEINE KAMERA / MIKROFON GEFUNDEN");
-}else{
-setStatus("KAMERA • ANTIPPEN");
-}
+if(error && error.message==="CAMERA_TIMEOUT")setStatus("KAMERA • ANTIPPEN");
+else setStatus(error && error.name==="NotAllowedError" ? "KAMERA / MIKROFON • FREIGABE PRÜFEN" : "KAMERA • ANTIPPEN");
 return false;
 }
 })();
-try{
-return await cameraRequestPromise;
-}finally{
-if(requestId===cameraRequestId)cameraRequestPromise=null;
-}
-}
-async function stopPreviewCamera(){
-if(previewStream){
-previewStream.getTracks().forEach(track=>track.stop());
-previewStream=null;
-}
-if(camera.srcObject){
-camera.srcObject=null;
-}
-placeholder.style.display="flex";
+try{return await cameraRequest;}finally{cameraRequest=null;}
 }
 function startGPS(){
 if(!navigator.geolocation){
@@ -1167,27 +924,21 @@ gpsWatch=null;
 if(mediaRecorder && mediaRecorder.state!=="inactive"){
 mediaRecorder.stop();
 }
+const stream=camera.srcObject;
+if(stream){
+setTimeout(()=>stream.getTracks().forEach(track=>track.stop()),120);
+}
+camera.srcObject=null;
+placeholder.style.display="flex";
+// After STOP the app navigation is always portrait; the saved video keeps its fixed format.
+showPortraitNavigation();
 resetValues();
-// Leaving a drive always returns the app UI to its normal portrait navigation mode.
-driveDisplayOrientation="portrait";
-applyPreviewOrientation();
 if(!recordedBlob)setStatus("VIDEO WIRD VERARBEITET...");
-else setStatus("KAMERA • BEREIT");
 }
 startButton.addEventListener("click",async()=>{
 if(running){
 stopRace();
 return;
-}
-// Camera preview should normally already be live. If iOS Safari delayed the
-// first permission/camera request, this same user tap is the safe fallback.
-if(!cameraReady){
-setStatus("KAMERA • WIRD GESTARTET");
-const cameraOK=await startCamera();
-if(!cameraOK){
-setStatus("KAMERA • ANTIPPEN");
-return;
-}
 }
 // Starting a new drive means the previous unsaved video is no longer the active save action.
 saveVideoButton.style.display="none";
@@ -1196,10 +947,9 @@ recordedBlob=null;
 recordedChunks=[];
 recordedFileName="";
 recordingMimeType="";
-running=true;
-recordingPortrait=videoOrientation==="portrait";
 driveDisplayOrientation=videoOrientation;
-await lockScreenOrientation();
+applyDriveOrientation();
+running=true;
 startButton.textContent="STOP DRIVE";
 startButton.classList.add("stop");
 recordBadge.style.display="flex";
@@ -1218,6 +968,10 @@ startGPS();
 startTimer();
 if(camera.srcObject){
 if(!(await startRecording(camera.srcObject))){
+const stream=camera.srcObject;
+if(stream)stream.getTracks().forEach(track=>track.stop());
+camera.srcObject=null;
+placeholder.style.display="flex";
 running=false;
 startButton.textContent="START DRIVE";
 startButton.classList.remove("stop");
@@ -1227,85 +981,46 @@ if(gpsWatch!==null){
 navigator.geolocation.clearWatch(gpsWatch);
 gpsWatch=null;
 }
-setStatus("AUFNAHME NICHT VERFÜGBAR");
 return;
 }
 setStatus("DM MOTION • RECORDING");
 }
 });
 saveVideoButton.addEventListener("click",saveRecordedVideo);
-// iOS Safari can occasionally delay or fail the initial camera request. A
-// normal touch is a reliable user gesture for retrying it, without stealing
-// the click or changing orientation. START DRIVE still remains the recording
-// control; this listener only prepares the camera when it is not ready.
-document.addEventListener("pointerdown",()=>{
-const menuOpen=document.getElementById("menu").classList.contains("open");
-const settingsOpen=settingsPanel.classList.contains("open");
-if(driveModeOpen && !menuOpen && !settingsOpen && !cameraReady && !cameraRequestPromise){
-void startCamera();
-}
-},{capture:true,passive:true});
 document.getElementById("menuBtn").onclick=()=>{
-openNavigation();
+showPortraitNavigation();
+document.getElementById("menu").classList.add("open");
 };
 document.getElementById("closeMenu").onclick=()=>{
-closeNavigation();
+document.getElementById("menu").classList.remove("open");
+restoreDriveOrientation();
 };
 document.getElementById("menu").addEventListener("click",e=>{
 if(e.target===document.getElementById("menu")){
-closeNavigation();
+document.getElementById("menu").classList.remove("open");
+restoreDriveOrientation();
 }
 });
 const menuItems=[...document.querySelectorAll(".item")];
-const driveMenuItem=menuItems.find(item=>item.textContent.trim().startsWith("Drive"));
-if(driveMenuItem){
-driveMenuItem.addEventListener("click",async()=>{
-driveModeOpen=true;
-closeNavigation();
-await startCamera();
-applyPreviewOrientation();
-});
-}
 const settingsMenuItem=menuItems.find(item=>item.textContent.trim().startsWith("Settings"));
 if(settingsMenuItem){settingsMenuItem.addEventListener("click",openSettings)}
-closeSettingsButton.addEventListener("click",closeSettingsPortrait);
+closeSettingsButton.addEventListener("click",closeSettings);
 settingsPanel.addEventListener("click",e=>{
-if(e.target===settingsPanel)closeSettingsPortrait();
+if(e.target===settingsPanel)closeSettings();
 });
-driveDisplayOrientation=videoOrientation;
-updateViewportMetrics();
 updateSettingsUI();
+driveDisplayOrientation=videoOrientation;
+applyDriveOrientation();
+// Start the preview in the background. Crucially, START DRIVE never waits
+// forever for this request; Safari can leave getUserMedia pending.
+setTimeout(()=>{void startCamera();},120);
+document.addEventListener("pointerdown",()=>{
+if(!cameraReady && !cameraRequest && !running && !settingsPanel.classList.contains("open")){
+void startCamera();
+}
+},{capture:true,passive:true});
 prepareSaveButton();
 resetValues();
-window.addEventListener("orientationchange",()=>{
-updateViewportMetrics();
-setTimeout(()=>{
-if(!settingsPanel.classList.contains("open") && !document.getElementById("menu").classList.contains("open")) applyPreviewOrientation();
-},80);
-});
-window.addEventListener("resize",()=>{
-updateViewportMetrics();
-setTimeout(applyPreviewOrientation,80);
-});
-if(window.visualViewport){
-window.visualViewport.addEventListener("resize",()=>{
-updateViewportMetrics();
-setTimeout(applyPreviewOrientation,80);
-});
-}
-document.addEventListener("visibilitychange",()=>{
-if(!document.hidden && driveModeOpen){
-setTimeout(()=>{
-if(previewStream && camera.srcObject!==previewStream)camera.srcObject=previewStream;
-applyPreviewOrientation();
-},120);
-}
-});
-// IMPORTANT: Do not call getUserMedia automatically on page load.
-// On iOS Safari a permission request can remain pending indefinitely. That
-// would otherwise make START DRIVE wait forever and make the app look frozen.
-// The first real touch on Drive starts the camera without starting recording.
-applyPreviewOrientation();
 </script>
 </body>
 </html>
