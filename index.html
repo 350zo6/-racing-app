@@ -350,7 +350,7 @@ var(--safe-bottom));width:min(300px,31vw);grid-template-columns:1fr 1fr;gap:7px}
 </div>
 </div>
 <div id="rec"><span id="recDot"></span>REC</div>
-<button id="menuBtn" aria-label="Menü">■</button>
+<button id="menuBtn" aria-label="Menü"> </button>
 <div id="hud">
 <div class="card"><div class="label">GPS</div><div class="value" id="gps">BEREIT</div></div>
 <div class="card" id="gforceCard"><div class="label">G-KRAFT</div><div class="value" id="gforce"><div
@@ -920,6 +920,10 @@ const type=mediaRecorder.mimeType || recordingMimeType || "video/mp4";
 recordedBlob=new Blob(recordedChunks,{type});
 const extension=type.includes("webm") ? "webm" : "mp4";
 recordedFileName="DM_Motion_Telemetry_"+new Date().toISOString().replace(/[:.]/g,"
+-
+")+"
+.
+"+extension;
 saveVideoButton.disabled=false;
 saveVideoButton.style.display="block";
 setStatus("VIDEO BEREIT • TELEMETRIE ENTHALTEN");
@@ -973,6 +977,7 @@ setStatus("VIDEO GESPEICHERT");
 }
 let cameraRequestPromise=null;
 let cameraReady=false;
+let cameraRequestId=0;
 async function attachCameraStream(stream){
 previewStream=stream;
 camera.setAttribute("autoplay"
@@ -984,17 +989,12 @@ camera.setAttribute("playsinline"
 camera.muted=true;
 camera.playsInline=true;
 camera.srcObject=stream;
-placeholder.style.display="none";
 try{await camera.play();}catch(error){console.log("Camera play:",error)}
 if(camera.readyState<2 || !camera.videoWidth || !camera.videoHeight){
 await new Promise(resolve=>{
 let finished=false;
 const finish=()=>{
 if(finished)return;
--
-")+"
-.
-"+extension;
 finished=true;
 camera.removeEventListener("loadeddata",finish);
 camera.removeEventListener("playing",finish);
@@ -1013,6 +1013,39 @@ applyPreviewOrientation();
 }
 return cameraReady;
 }
+function stopStream(stream){
+if(stream){
+stream.getTracks().forEach(track=>{
+try{track.stop();}catch(error){}
+});
+}
+}
+function getUserMediaWithTimeout(constraints,timeoutMs,requestId){
+return new Promise((resolve,reject)=>{
+let settled=false;
+const timer=setTimeout(()=>{
+if(settled)return;
+settled=true;
+reject(new DOMException("Camera request timed out"
+,
+"AbortError"));
+},timeoutMs);
+navigator.mediaDevices.getUserMedia(constraints).then(stream=>{
+if(settled || requestId!==cameraRequestId){
+stopStream(stream);
+return;
+}
+settled=true;
+clearTimeout(timer);
+resolve(stream);
+}).catch(error=>{
+if(settled)return;
+settled=true;
+clearTimeout(timer);
+reject(error);
+});
+});
+}
 async function startCamera(){
 if(cameraReady && previewStream && previewStream.active){
 if(camera.srcObject!==previewStream)camera.srcObject=previewStream;
@@ -1022,41 +1055,67 @@ applyPreviewOrientation();
 return true;
 }
 if(cameraRequestPromise)return cameraRequestPromise;
+const requestId=++cameraRequestId;
 cameraRequestPromise=(async()=>{
 try{
-if(previewStream && !previewStream.active){
-previewStream.getTracks().forEach(track=>track.stop());
-previewStream=null;
-}
 if(!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia){
 setStatus("KAMERA NICHT VERFÜGBAR");
 return false;
 }
-// Keep the live camera request simple. Resolution/FPS are controlled by the
-// recording canvas, not forced onto the live iPhone camera track.
+if(previewStream && !previewStream.active){
+stopStream(previewStream);
+previewStream=null;
+}
+setStatus("KAMERA • WIRD GESTARTET");
 let stream;
 try{
-stream=await navigator.mediaDevices.getUserMedia({
-video:{facingMode:{exact:"environment"}},
-audio:true
-});
+// Keep the request deliberately simple. Do not force resolution/FPS here.
+// Those belong to the recording canvas.
+stream=await getUserMediaWithTimeout(
+{video:{facingMode:"environment"},audio:true},
+8000,
+requestId
+);
 }catch(error){
 console.log("Camera environment request:",error);
-stream=await navigator.mediaDevices.getUserMedia({video:true,audio:true});
+// Only try the generic camera after a real, fast rejection. A timeout
+// means Safari may still have a pending permission request; do not stack
+// another request on top of it.
+if(error && error.name==="AbortError"){
+cameraReady=false;
+placeholder.style.display="flex";
+setStatus("KAMERA • ANTIPPEN");
+return false;
+}
+stream=await getUserMediaWithTimeout(
+{video:true,audio:true},
+8000,
+requestId
+);
+}
+if(requestId!==cameraRequestId){
+stopStream(stream);
+return false;
 }
 return await attachCameraStream(stream);
 }catch(error){
 console.log("Camera:",error);
 cameraReady=false;
 placeholder.style.display="flex";
+if(error && error.name==="NotAllowedError"){
+setStatus("KAMERA / MIKROFON • FREIGABE PRÜFEN");
+}else if(error && error.name==="NotFoundError"){
+setStatus("KEINE KAMERA / MIKROFON GEFUNDEN");
+}else{
 setStatus("KAMERA • ANTIPPEN");
+}
 return false;
 }
 })();
 try{
 return await cameraRequestPromise;
 }finally{
-cameraRequestPromise=null;
+if(requestId===cameraRequestId)cameraRequestPromise=null;
 }
 }
 async function stopPreviewCamera(){
@@ -1242,14 +1301,11 @@ applyPreviewOrientation();
 },120);
 }
 });
-setTimeout(async()=>{
-// Best effort: if Safari already has permission, the camera is ready before
-// the user starts a drive. If Safari needs a gesture, the pointerdown/start
-// fallbacks above take over without blocking the Drive UI.
-const ok=await startCamera();
-if(!ok && !running)setStatus("KAMERA • ANTIPPEN");
+// IMPORTANT: Do not call getUserMedia automatically on page load.
+// On iOS Safari a permission request can remain pending indefinitely. That
+// would otherwise make START DRIVE wait forever and make the app look frozen.
+// The first real touch on Drive starts the camera without starting recording.
 applyPreviewOrientation();
-},180);
 </script>
 </body>
 </html>
