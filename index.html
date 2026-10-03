@@ -236,13 +236,13 @@ left:auto;
 right:22px;
 top:auto;
 bottom:calc(18px + var(--safe-bottom));
-width:min(250px,27vw);
+width:min(300px,31vw);
 grid-template-columns:1fr 1fr;
 gap:7px;
 }
 .card{
-min-height:50px;
-padding:6px 8px;
+min-height:62px;
+padding:7px 9px;
 border-radius:11px;
 }
 .label{
@@ -259,196 +259,11 @@ left:22px;right:auto;
 bottom:calc(18px + var(--safe-bottom));
 justify-content:flex-start;
 }
-#start{width:min(280px,32vw);height:48px}
+#start{width:min(330px,38vw);height:54px}
 #status{
 left:22px;transform:none;
 bottom:calc(79px + var(--safe-bottom));
 }
-}
-/* FINAL LANDSCAPE HUD SIZE OVERRIDE */
-@media screen and (min-width:700px) and (orientation:landscape){
-#hud{
-left:auto !important; right:22px !important;
-top:auto !important; bottom:calc(92px + var(--safe-bottom)) !important;
-width:480px !important; max-width:calc(100vw - 44px) !important;
-grid-template-columns:repeat(2,minmax(0,1fr)) !important;
-gap:8px !important;
-}
-#hud .card{
-min-height:54px !important; height:54px !important;
-padding:8px 10px !important;
-border-radius:12px !important;
-}
-#hud .label{font-size:7px !important; letter-spacing:1.7px !important;}
-#hud .value{font-size:13px !important; margin-top:3px !important;}
-#gforceCard .value{font-size:10px !important; line-height:1.18 !important; margin-top:3px !important;}
-#controls{
-left:22px !important; right:auto !important;
-bottom:calc(18px + var(--safe-bottom)) !important;
-justify-content:flex-start !important;
-}
-#start{width:280px !important; max-width:280px !important; height:48px !important; border-radius:16px !important;}
-#status{left:22px !important; transform:none !important; bottom:calc(79px + var(--safe-bottom)) !important;}
-}
-/* COMPACT LANDSCAPE HUD — portrait untouched */
-@media screen and (min-width:700px) and (orientation:landscape){
-#hud{
-left:auto !important;
-right:22px !important;
-top:auto !important;
-bottom:calc(86px + var(--safe-bottom)) !important;
-width:320px !important;
-max-width:320px !important;
-grid-template-columns:repeat(2, 1fr) !important;
-gap:6px !important;
-}
-#hud .card{
-min-height:44px !important;
-height:44px !important;
-padding:6px 8px !important;
-border-radius:10px !important;
-}
-#hud .label{
-font-size:6px !important;
-letter-spacing:1.5px !important;
-}
-#hud .value{
-margin-top:2px !important;
-font-size:11px !important;
-letter-spacing:-.1px !important;
-}
-#gforceCard .value{
-font-size:9px !important;
-line-height:1.12 !important;
-margin-top:2px !important;
-}
-#status{
-left:auto !important;
-right:22px !important;
-transform:none !important;
-bottom:calc(67px + var(--safe-bottom)) !important;
-font-size:7px !important;
-}
-#controls{
-left:auto !important;
-right:22px !important;
-bottom:calc(16px + var(--safe-bottom)) !important;
-justify-content:flex-end !important;
-}
-#start{
-width:240px !important;
-max-width:240px !important;
-height:44px !important;
-border-radius:14px !important;
-font-size:12px !important;
-}
-}
-/* Robust iPhone landscape detection: based on the actual viewport ratio. */
-body.dm-landscape #hud{
-left:auto !important;
-right:22px !important;
-top:auto !important;
-bottom:calc(86px + var(--safe-bottom)) !important;
-width:340px !important;
-max-width:340px !important;
-grid-template-columns:repeat(2,minmax(0,1fr)) !important;
-gap:7px !important;
-}
-body.dm-landscape #hud .card{
-min-height:46px !important;
-height:46px !important;
-padding:6px 8px !important;
-border-radius:10px !important;
-}
-body.dm-landscape #hud .label{
-font-size:6px !important;
-letter-spacing:1.5px !important;
-}
-body.dm-landscape #hud .value{
-margin-top:2px !important;
-font-size:11px !important;
-}
-body.dm-landscape #gforceCard .value{
-font-size:9px !important;
-line-height:1.12 !important;
-}
-body.dm-landscape #status{
-left:auto !important;
-right:22px !important;
-transform:none !important;
-bottom:calc(68px + var(--safe-bottom)) !important;
-font-size:7px !important;
-}
-body.dm-landscape #controls{
-left:auto !important;
-right:22px !important;
-bottom:calc(16px + var(--safe-bottom)) !important;
-justify-content:flex-end !important;
-}
-body.dm-landscape #start{
-width:250px !important;
-max-width:250px !important;
-height:44px !important;
-border-radius:14px !important;
-font-size:12px !important;
-}
-/* FINAL REAL LANDSCAPE LAYOUT — activated by body.dm-landscape */
-body.dm-landscape #hud{
-position:absolute !important;
-left:auto !important;
-right:24px !important;
-top:auto !important;
-bottom:calc(78px + var(--safe-bottom)) !important;
-width:330px !important;
-max-width:330px !important;
-margin:0 !important;
-display:grid !important;
-grid-template-columns:repeat(2,minmax(0,1fr)) !important;
-gap:6px !important;
-}
-body.dm-landscape #hud .card{
-min-width:0 !important;
-min-height:42px !important;
-height:42px !important;
-padding:5px 8px !important;
-border-radius:10px !important;
-}
-body.dm-landscape #hud .label{
-font-size:6px !important;
-line-height:1 !important;
-letter-spacing:1.4px !important;
-}
-body.dm-landscape #hud .value{
-margin-top:2px !important;
-font-size:11px !important;
-line-height:1.05 !important;
-}
-body.dm-landscape #gforceCard .value{
-font-size:8.5px !important;
-line-height:1.08 !important;
-margin-top:2px !important;
-}
-body.dm-landscape #status{
-left:auto !important;
-right:24px !important;
-transform:none !important;
-bottom:calc(59px + var(--safe-bottom)) !important;
-font-size:7px !important;
-letter-spacing:1.2px !important;
-}
-body.dm-landscape #controls{
-left:auto !important;
-right:24px !important;
-bottom:calc(12px + var(--safe-bottom)) !important;
-justify-content:flex-end !important;
-}
-body.dm-landscape #start{
-width:230px !important;
-max-width:230px !important;
-height:42px !important;
-border-radius:13px !important;
-font-size:12px !important;
-letter-spacing:1.8px !important;
 }
 </style>
 </head>
@@ -490,11 +305,11 @@ G</b></div><div class="gmini"><span>ACCEL</span><b id="gAccel">0.00 G</b></div><
 </div>
 <button class="close" id="closeMenu">×</button>
 </div>
-<button type="button" class="item" id="driveMenuItem">Drive <span>›</span></button>
-<button type="button" class="item" id="myDrivesMenuItem">My Drives <span>›</span></button>
-<button type="button" class="item">Analysis <span>›</span></button>
-<button type="button" class="item">Tracks <span>›</span></button>
-<button type="button" class="item" id="settingsMenuItem">Settings <span>›</span></button>
+<button class="item">Drive <span>›</span></button>
+<button class="item">My Drives <span>›</span></button>
+<button class="item">Analysis <span>›</span></button>
+<button class="item">Tracks <span>›</span></button>
+<button class="item">Settings <span>›</span></button>
 </div>
 </div>
 <div id="drivesPanel">
@@ -642,8 +457,8 @@ applyPreviewOrientation();
 function openSettings(){
 if(running)return;
 updateSettingsUI();
-document.getElementById("menu").classList.remove("open");
 settingsPanel.classList.add("open");
+document.getElementById("menu").classList.remove("open");
 }
 function closeSettings(){settingsPanel.classList.remove("open")}
 qualityButtons.forEach(btn=>btn.addEventListener("click",()=>{
@@ -1208,45 +1023,19 @@ document.getElementById("menu").classList.remove("open");
 }
 });
 const menuItems=[...document.querySelectorAll(".item")];
-const driveMenuItem=document.getElementById("driveMenuItem");
+const driveMenuItem=menuItems.find(item=>item.textContent.trim().startsWith("Drive"));
 if(driveMenuItem){
-driveMenuItem.addEventListener("click",async(e)=>{
-e.preventDefault();
-e.stopPropagation();
+driveMenuItem.addEventListener("click",async()=>{
 driveModeOpen=true;
 document.getElementById("menu").classList.remove("open");
 await startCamera();
 applyPreviewOrientation();
 });
 }
-const myDrivesMenuItem=document.getElementById("myDrivesMenuItem");
-if(myDrivesMenuItem){
-myDrivesMenuItem.addEventListener("click",(e)=>{
-e.preventDefault();
-e.stopPropagation();
-openDrives();
-});
-}
-const settingsMenuItem=document.getElementById("settingsMenuItem");
-if(settingsMenuItem){
-settingsMenuItem.addEventListener("click",(e)=>{
-e.preventDefault();
-e.stopPropagation();
-e.stopImmediatePropagation();
-if(running)return;
-openSettings();
-},true);
-}
-// Capture the Settings tap before any parent/menu handler can process it.
-document.getElementById("menu").addEventListener("click",(e)=>{
-const settings=e.target.closest("#settingsMenuItem");
-if(settings){
-e.preventDefault();
-e.stopPropagation();
-e.stopImmediatePropagation();
-if(!running)openSettings();
-}
-},true);
+const myDrivesMenuItem=menuItems.find(item=>item.textContent.trim().startsWith("My Drives"));
+if(myDrivesMenuItem){myDrivesMenuItem.addEventListener("click",openDrives)}
+const settingsMenuItem=menuItems.find(item=>item.textContent.trim().startsWith("Settings"));
+if(settingsMenuItem){settingsMenuItem.addEventListener("click",openSettings)}
 closeSettingsButton.addEventListener("click",closeSettings);
 closeDrivesButton.addEventListener("click",closeDrives);
 drivesPanel.addEventListener("click",e=>{if(e.target===drivesPanel)closeDrives();});
@@ -1276,26 +1065,6 @@ setTimeout(async()=>{
 await startCamera();
 applyPreviewOrientation();
 },120);
-// Use the actual viewport dimensions so iPhone Safari landscape is detected
-// even when its CSS orientation media query does not update immediately.
-(function syncDMOrientation(){
-const sync = () => {
-const angle = Number(
-(screen.orientation && typeof screen.orientation.angle === "number")
-? screen.orientation.angle
-: (typeof window.orientation === "number" ? window.orientation : 0)
-);
-const landscapeByAngle = Math.abs(angle) === 90 || Math.abs(angle) === 270;
-const landscapeByViewport = window.innerWidth > window.innerHeight;
-document.body.classList.toggle("dm-landscape", landscapeByAngle || landscapeByViewport);
-};
-sync();
-window.addEventListener("resize", sync, {passive:true});
-window.addEventListener("orientationchange", () => setTimeout(sync, 50), {passive:true});
-if (screen.orientation && screen.orientation.addEventListener) {
-screen.orientation.addEventListener("change", sync, {passive:true});
-}
-})();
 </script>
 </body>
 </html>
