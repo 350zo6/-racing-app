@@ -392,6 +392,64 @@ height:44px !important;
 border-radius:14px !important;
 font-size:12px !important;
 }
+/* FINAL REAL LANDSCAPE LAYOUT — activated by body.dm-landscape */
+body.dm-landscape #hud{
+position:absolute !important;
+left:auto !important;
+right:24px !important;
+top:auto !important;
+bottom:calc(78px + var(--safe-bottom)) !important;
+width:330px !important;
+max-width:330px !important;
+margin:0 !important;
+display:grid !important;
+grid-template-columns:repeat(2,minmax(0,1fr)) !important;
+gap:6px !important;
+}
+body.dm-landscape #hud .card{
+min-width:0 !important;
+min-height:42px !important;
+height:42px !important;
+padding:5px 8px !important;
+border-radius:10px !important;
+}
+body.dm-landscape #hud .label{
+font-size:6px !important;
+line-height:1 !important;
+letter-spacing:1.4px !important;
+}
+body.dm-landscape #hud .value{
+margin-top:2px !important;
+font-size:11px !important;
+line-height:1.05 !important;
+}
+body.dm-landscape #gforceCard .value{
+font-size:8.5px !important;
+line-height:1.08 !important;
+margin-top:2px !important;
+}
+body.dm-landscape #status{
+left:auto !important;
+right:24px !important;
+transform:none !important;
+bottom:calc(59px + var(--safe-bottom)) !important;
+font-size:7px !important;
+letter-spacing:1.2px !important;
+}
+body.dm-landscape #controls{
+left:auto !important;
+right:24px !important;
+bottom:calc(12px + var(--safe-bottom)) !important;
+justify-content:flex-end !important;
+}
+body.dm-landscape #start{
+width:230px !important;
+max-width:230px !important;
+height:42px !important;
+border-radius:13px !important;
+font-size:12px !important;
+letter-spacing:1.8px !important;
+}
 </style>
 </head>
 <body>
@@ -1194,16 +1252,23 @@ applyPreviewOrientation();
 },120);
 // Use the actual viewport dimensions so iPhone Safari landscape is detected
 // even when its CSS orientation media query does not update immediately.
-(function syncDMViewportOrientation(){
+(function syncDMOrientation(){
 const sync = () => {
-document.body.classList.toggle(
-"dm-landscape",
-window.innerWidth > window.innerHeight
+const angle = Number(
+(screen.orientation && typeof screen.orientation.angle === "number")
+? screen.orientation.angle
+: (typeof window.orientation === "number" ? window.orientation : 0)
 );
+const landscapeByAngle = Math.abs(angle) === 90 || Math.abs(angle) === 270;
+const landscapeByViewport = window.innerWidth > window.innerHeight;
+document.body.classList.toggle("dm-landscape", landscapeByAngle || landscapeByViewport);
 };
 sync();
 window.addEventListener("resize", sync, {passive:true});
 window.addEventListener("orientationchange", () => setTimeout(sync, 50), {passive:true});
+if (screen.orientation && screen.orientation.addEventListener) {
+screen.orientation.addEventListener("change", sync, {passive:true});
+}
 })();
 </script>
 </body>
