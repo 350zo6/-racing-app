@@ -309,7 +309,7 @@ G</b></div><div class="gmini"><span>ACCEL</span><b id="gAccel">0.00 G</b></div><
 <button class="item">My Drives <span>›</span></button>
 <button class="item">Analysis <span>›</span></button>
 <button class="item">Tracks <span>›</span></button>
-<button type="button" class="item" id="settingsMenuItem" style="position:relative;z-index:1001;pointer-events:auto;" onclick="openSettings();retur
+<button type="button" class="item" id="settingsMenuItem">Settings <span>›</span></button>
 </div>
 </div>
 <div id="drivesPanel">
@@ -1079,6 +1079,24 @@ hud.style.removeProperty("gap");
 apply();
 window.addEventListener("resize",apply,{passive:true});
 window.addEventListener("orientationchange",()=>setTimeout(apply,100),{passive:true});
+})();
+(function dmFixSettingsTap(){
+const btn=document.getElementById("settingsMenuItem");
+const panel=document.getElementById("settingsPanel");
+const menu=document.getElementById("menu");
+if(!btn || !panel || !menu) return;
+function showSettings(e){
+if(e){ e.preventDefault(); e.stopPropagation(); }
+const runningState = (typeof running !== "undefined") ? running : false;
+// Settings must be reachable whenever the car is not actively recording.
+if(runningState) return;
+if(typeof updateSettingsUI === "function") updateSettingsUI();
+menu.classList.remove("open");
+panel.classList.add("open");
+}
+btn.addEventListener("pointerup",showSettings,{capture:true});
+btn.addEventListener("touchend",showSettings,{capture:true});
+btn.addEventListener("click",showSettings,{capture:true});
 })();
 </script>
 </body>
