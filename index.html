@@ -265,10 +265,6 @@ left:22px;transform:none;
 bottom:calc(79px + var(--safe-bottom));
 }
 }
-/* PORTRAIT HUD — restore the original 2x2 arrangement */
-body.dm-portrait #hud{
-grid-template-columns:repeat(2,minmax(0,1fr)) !important;
-}
 </style>
 </head>
 <body>
@@ -313,7 +309,7 @@ G</b></div><div class="gmini"><span>ACCEL</span><b id="gAccel">0.00 G</b></div><
 <button class="item">My Drives <span>›</span></button>
 <button class="item">Analysis <span>›</span></button>
 <button class="item">Tracks <span>›</span></button>
-<button type="button" class="item" id="settingsMenuItem" onclick="openSettings();return false;">Settings <span>›</span></button>
+<button type="button" class="item" id="settingsMenuItem">Settings <span>›</span></button>
 </div>
 </div>
 <div id="drivesPanel">
@@ -459,9 +455,10 @@ settingsSummaryValue.textContent=`${videoQuality} / ${videoFps} FPS`;
 applyPreviewOrientation();
 }
 function openSettings(){
+if(running)return;
 updateSettingsUI();
-document.getElementById("menu").classList.remove("open");
 settingsPanel.classList.add("open");
+document.getElementById("menu").classList.remove("open");
 }
 function closeSettings(){settingsPanel.classList.remove("open")}
 qualityButtons.forEach(btn=>btn.addEventListener("click",()=>{
@@ -1066,14 +1063,40 @@ setTimeout(async()=>{
 await startCamera();
 applyPreviewOrientation();
 },120);
-(function syncDMPortraitLayout(){
-const sync=()=>{
+(function dmFixHudLayout(){
+function apply(){
+const hud=document.getElementById("hud");
+if(!hud) return;
 const portrait=window.innerHeight >= window.innerWidth;
-document.body.classList.toggle("dm-portrait",portrait);
-};
-sync();
-window.addEventListener("resize",sync,{passive:true});
-window.addEventListener("orientationchange",()=>setTimeout(sync,80),{passive:true});
+if(portrait){
+hud.style.setProperty("grid-template-columns","repeat(2,minmax(0,1fr))","important");
+hud.style.setProperty("gap","8px","important");
+}else{
+hud.style.removeProperty("grid-template-columns");
+hud.style.removeProperty("gap");
+}
+}
+apply();
+window.addEventListener("resize",apply,{passive:true});
+window.addEventListener("orientationchange",()=>setTimeout(apply,100),{passive:true});
+})();
+(function dmFixSettingsTap(){
+const btn=document.getElementById("settingsMenuItem");
+const panel=document.getElementById("settingsPanel");
+const menu=document.getElementById("menu");
+if(!btn || !panel || !menu) return;
+function showSettings(e){
+if(e){ e.preventDefault(); e.stopPropagation(); }
+const runningState = (typeof running !== "undefined") ? running : false;
+// Settings must be reachable whenever the car is not actively recording.
+if(runningState) return;
+if(typeof updateSettingsUI === "function") updateSettingsUI();
+menu.classList.remove("open");
+panel.classList.add("open");
+}
+btn.addEventListener("pointerup",showSettings,{capture:true});
+btn.addEventListener("touchend",showSettings,{capture:true});
+btn.addEventListener("click",showSettings,{capture:true});
 })();
 </script>
 </body>
