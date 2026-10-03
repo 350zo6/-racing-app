@@ -154,6 +154,15 @@ border-bottom:1px solid rgba(255,255,255,.08);
 color:#fff;font-size:15px;text-align:left;
 }
 .item span{color:#666;font-size:20px}
+#drivesPanel{position:fixed;inset:0;z-index:80;display:none;background:rgba(0,0,0,.92);padding:22px 16px;}
+#drivesPanel.open{display:block;}
+.drivesSheet{width:100%;max-width:560px;margin:0 auto;padding:18px 16px 24px;border:1px solid rgba(255,255,255,.18);border-radius:24px;background:
+.drivesHead{display:flex;justify-content:space-between;align-items:center;margin-bottom:24px;}
+.drivesTitle{font-size:25px;font-weight:900;letter-spacing:-.6px;}
+.drivesClose{border:0;background:none;color:#fff;font-size:30px;line-height:1;padding:0 4px;}
+.drivesEmpty{padding:38px 12px 30px;text-align:center;color:#888;}
+.drivesEmpty strong{display:block;color:#fff;font-size:18px;margin-bottom:8px;}
+.drivesEmpty span{font-size:11px;letter-spacing:1px;}
 #settingsPanel{
 position:absolute;inset:0;z-index:120;display:none;
 background:rgba(0,0,0,.76);
@@ -303,6 +312,18 @@ G</b></div><div class="gmini"><span>ACCEL</span><b id="gAccel">0.00 G</b></div><
 <button class="item">Settings <span>›</span></button>
 </div>
 </div>
+<div id="drivesPanel">
+<div class="drivesSheet">
+<div class="drivesHead">
+<div class="drivesTitle">Meine Fahrten</div>
+<button class="drivesClose" id="closeDrives" aria-label="Meine Fahrten schließen">×</button>
+</div>
+<div class="drivesEmpty">
+<strong>Noch keine Fahrten</strong>
+<span>Deine gespeicherten Fahrten werden hier später angezeigt.</span>
+</div>
+</div>
+</div>
 <div id="settingsPanel">
 <div class="settingsSheet">
 <div class="settingsHead">
@@ -363,6 +384,10 @@ let recordedFileName="";
 let recordingMimeType="";
 const saveVideoButton=document.getElementById("saveVideo");
 const settingsPanel=document.getElementById("settingsPanel");
+const drivesPanel=document.getElementById("drivesPanel");
+const closeDrivesButton=document.getElementById("closeDrives");
+function openDrives(){drivesPanel.classList.add("open");document.getElementById("menu").classList.remove("open");}
+function closeDrives(){drivesPanel.classList.remove("open");}
 const closeSettingsButton=document.getElementById("closeSettings");
 const settingsSummaryValue=document.getElementById("settingsSummaryValue");
 const qualityButtons=[...document.querySelectorAll("[data-quality]")];
@@ -1007,9 +1032,13 @@ await startCamera();
 applyPreviewOrientation();
 });
 }
+const myDrivesMenuItem=menuItems.find(item=>item.textContent.trim().startsWith("My Drives"));
+if(myDrivesMenuItem){myDrivesMenuItem.addEventListener("click",openDrives)}
 const settingsMenuItem=menuItems.find(item=>item.textContent.trim().startsWith("Settings"));
 if(settingsMenuItem){settingsMenuItem.addEventListener("click",openSettings)}
 closeSettingsButton.addEventListener("click",closeSettings);
+closeDrivesButton.addEventListener("click",closeDrives);
+drivesPanel.addEventListener("click",e=>{if(e.target===drivesPanel)closeDrives();});
 settingsPanel.addEventListener("click",e=>{
 if(e.target===settingsPanel)closeSettings();
 });
