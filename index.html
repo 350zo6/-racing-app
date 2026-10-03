@@ -265,6 +265,10 @@ left:22px;transform:none;
 bottom:calc(79px + var(--safe-bottom));
 }
 }
+/* PORTRAIT HUD — restore the original 2x2 arrangement */
+body.dm-portrait #hud{
+grid-template-columns:repeat(2,minmax(0,1fr)) !important;
+}
 </style>
 </head>
 <body>
@@ -309,7 +313,7 @@ G</b></div><div class="gmini"><span>ACCEL</span><b id="gAccel">0.00 G</b></div><
 <button class="item">My Drives <span>›</span></button>
 <button class="item">Analysis <span>›</span></button>
 <button class="item">Tracks <span>›</span></button>
-<button type="button" class="item" id="settingsMenuItem">Settings <span>›</span></button>
+<button type="button" class="item" id="settingsMenuItem" onclick="openSettings();return false;">Settings <span>›</span></button>
 </div>
 </div>
 <div id="drivesPanel">
@@ -455,10 +459,9 @@ settingsSummaryValue.textContent=`${videoQuality} / ${videoFps} FPS`;
 applyPreviewOrientation();
 }
 function openSettings(){
-if(running)return;
 updateSettingsUI();
-settingsPanel.classList.add("open");
 document.getElementById("menu").classList.remove("open");
+settingsPanel.classList.add("open");
 }
 function closeSettings(){settingsPanel.classList.remove("open")}
 qualityButtons.forEach(btn=>btn.addEventListener("click",()=>{
@@ -1034,14 +1037,6 @@ applyPreviewOrientation();
 }
 const myDrivesMenuItem=menuItems.find(item=>item.textContent.trim().startsWith("My Drives"));
 if(myDrivesMenuItem){myDrivesMenuItem.addEventListener("click",openDrives)}
-const settingsMenuItem=document.getElementById("settingsMenuItem");
-if(settingsMenuItem){
-settingsMenuItem.addEventListener("click",(e)=>{
-e.preventDefault();
-e.stopPropagation();
-openSettings();
-});
-}
 closeSettingsButton.addEventListener("click",closeSettings);
 closeDrivesButton.addEventListener("click",closeDrives);
 drivesPanel.addEventListener("click",e=>{if(e.target===drivesPanel)closeDrives();});
@@ -1071,6 +1066,15 @@ setTimeout(async()=>{
 await startCamera();
 applyPreviewOrientation();
 },120);
+(function syncDMPortraitLayout(){
+const sync=()=>{
+const portrait=window.innerHeight >= window.innerWidth;
+document.body.classList.toggle("dm-portrait",portrait);
+};
+sync();
+window.addEventListener("resize",sync,{passive:true});
+window.addEventListener("orientationchange",()=>setTimeout(sync,80),{passive:true});
+})();
 </script>
 </body>
 </html>
