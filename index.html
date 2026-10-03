@@ -343,6 +343,55 @@ border-radius:14px !important;
 font-size:12px !important;
 }
 }
+/* Robust iPhone landscape detection: based on the actual viewport ratio. */
+body.dm-landscape #hud{
+left:auto !important;
+right:22px !important;
+top:auto !important;
+bottom:calc(86px + var(--safe-bottom)) !important;
+width:340px !important;
+max-width:340px !important;
+grid-template-columns:repeat(2,minmax(0,1fr)) !important;
+gap:7px !important;
+}
+body.dm-landscape #hud .card{
+min-height:46px !important;
+height:46px !important;
+padding:6px 8px !important;
+border-radius:10px !important;
+}
+body.dm-landscape #hud .label{
+font-size:6px !important;
+letter-spacing:1.5px !important;
+}
+body.dm-landscape #hud .value{
+margin-top:2px !important;
+font-size:11px !important;
+}
+body.dm-landscape #gforceCard .value{
+font-size:9px !important;
+line-height:1.12 !important;
+}
+body.dm-landscape #status{
+left:auto !important;
+right:22px !important;
+transform:none !important;
+bottom:calc(68px + var(--safe-bottom)) !important;
+font-size:7px !important;
+}
+body.dm-landscape #controls{
+left:auto !important;
+right:22px !important;
+bottom:calc(16px + var(--safe-bottom)) !important;
+justify-content:flex-end !important;
+}
+body.dm-landscape #start{
+width:250px !important;
+max-width:250px !important;
+height:44px !important;
+border-radius:14px !important;
+font-size:12px !important;
+}
 </style>
 </head>
 <body>
@@ -1143,6 +1192,19 @@ setTimeout(async()=>{
 await startCamera();
 applyPreviewOrientation();
 },120);
+// Use the actual viewport dimensions so iPhone Safari landscape is detected
+// even when its CSS orientation media query does not update immediately.
+(function syncDMViewportOrientation(){
+const sync = () => {
+document.body.classList.toggle(
+"dm-landscape",
+window.innerWidth > window.innerHeight
+);
+};
+sync();
+window.addEventListener("resize", sync, {passive:true});
+window.addEventListener("orientationchange", () => setTimeout(sync, 50), {passive:true});
+})();
 </script>
 </body>
 </html>
