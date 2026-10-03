@@ -490,11 +490,11 @@ G</b></div><div class="gmini"><span>ACCEL</span><b id="gAccel">0.00 G</b></div><
 </div>
 <button class="close" id="closeMenu">×</button>
 </div>
-<button class="item">Drive <span>›</span></button>
-<button class="item">My Drives <span>›</span></button>
-<button class="item">Analysis <span>›</span></button>
-<button class="item">Tracks <span>›</span></button>
-<button class="item">Settings <span>›</span></button>
+<button type="button" class="item" id="driveMenuItem">Drive <span>›</span></button>
+<button type="button" class="item" id="myDrivesMenuItem">My Drives <span>›</span></button>
+<button type="button" class="item">Analysis <span>›</span></button>
+<button type="button" class="item">Tracks <span>›</span></button>
+<button type="button" class="item" id="settingsMenuItem">Settings <span>›</span></button>
 </div>
 </div>
 <div id="drivesPanel">
@@ -1219,8 +1219,14 @@ applyPreviewOrientation();
 }
 const myDrivesMenuItem=menuItems.find(item=>item.textContent.trim().startsWith("My Drives"));
 if(myDrivesMenuItem){myDrivesMenuItem.addEventListener("click",openDrives)}
-const settingsMenuItem=menuItems.find(item=>item.textContent.trim().startsWith("Settings"));
-if(settingsMenuItem){settingsMenuItem.addEventListener("click",openSettings)}
+const settingsMenuItem=document.getElementById("settingsMenuItem");
+if(settingsMenuItem){
+settingsMenuItem.addEventListener("click",(e)=>{
+e.preventDefault();
+e.stopPropagation();
+openSettings();
+});
+}
 closeSettingsButton.addEventListener("click",closeSettings);
 closeDrivesButton.addEventListener("click",closeDrives);
 drivesPanel.addEventListener("click",e=>{if(e.target===drivesPanel)closeDrives();});
