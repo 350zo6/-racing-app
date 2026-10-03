@@ -156,7 +156,7 @@ color:#fff;font-size:15px;text-align:left;
 .item span{color:#666;font-size:20px}
 #drivesPanel{position:fixed;inset:0;z-index:80;display:none;background:rgba(0,0,0,.92);padding:22px 16px;}
 #drivesPanel.open{display:block;}
-.drivesSheet{width:100%;max-width:560px;margin:0 auto;padding:18px 16px 24px;border:1px solid rgba(255,255,255,.18);border-radius:24px;background:rgba(18,1
+.drivesSheet{width:100%;max-width:560px;margin:0 auto;padding:18px 16px 24px;border:1px solid rgba(255,255,255,.18);border-radius:24px;background:
 .drivesHead{display:flex;justify-content:space-between;align-items:center;margin-bottom:24px;}
 .drivesTitle{font-size:25px;font-weight:900;letter-spacing:-.6px;}
 .drivesClose{border:0;background:none;color:#fff;font-size:30px;line-height:1;padding:0 4px;}
@@ -293,7 +293,7 @@ G</b></div><div class="gmini"><span>ACCEL</span><b id="gAccel">0.00 G</b></div><
 <div class="card"><div class="label">SENSOR</div><div class="value" id="sensor">BEREIT</div></div>
 <div class="card"><div class="label">ZEIT</div><div class="value" id="time">00:00</div></div>
 </div>
-<div id="status">DM MOTION ■ READY</div>
+<div id="status">DM MOTION • READY</div>
 <button id="saveVideo" type="button">VIDEO SPEICHERN</button>
 <div id="controls"><button id="start">START DRIVE</button></div>
 <div id="menu">
@@ -305,11 +305,11 @@ G</b></div><div class="gmini"><span>ACCEL</span><b id="gAccel">0.00 G</b></div><
 </div>
 <button class="close" id="closeMenu">×</button>
 </div>
-<button type="button" class="item" id="driveMenuItem">Drive <span>›</span></button>
-<button type="button" class="item" id="myDrivesMenuItem">My Drives <span>›</span></button>
+<button class="item">Drive <span>›</span></button>
+<button class="item">My Drives <span>›</span></button>
 <button class="item">Analysis <span>›</span></button>
 <button class="item">Tracks <span>›</span></button>
-<button type="button" class="item" id="settingsMenuItem">Settings <span>›</span></button>
+<button type="button" class="item" id="settingsMenuItem" onclick="openSettings();return false;">Settings <span>›</span></button>
 </div>
 </div>
 <div id="drivesPanel">
@@ -813,7 +813,7 @@ const extension=type.includes("webm") ? "webm" : "mp4";
 recordedFileName="DM_Motion_Telemetry_"+new Date().toISOString().replace(/[:.]/g,"-")+"."+extension;
 saveVideoButton.disabled=false;
 saveVideoButton.style.display="block";
-setStatus("VIDEO BEREIT ■ TELEMETRIE ENTHALTEN");
+setStatus("VIDEO BEREIT • TELEMETRIE ENTHALTEN");
 };
 mediaRecorder.start(1000);
 return true;
@@ -960,7 +960,7 @@ mediaRecorder.stop();
 resetValues();
 applyPreviewOrientation();
 if(!recordedBlob)setStatus("VIDEO WIRD VERARBEITET...");
-else setStatus("KAMERA ■ BEREIT");
+else setStatus("KAMERA • BEREIT");
 }
 startButton.addEventListener("click",async()=>{
 if(running){
@@ -1007,7 +1007,7 @@ gpsWatch=null;
 setStatus("AUFNAHME NICHT VERFÜGBAR");
 return;
 }
-setStatus("DM MOTION ■ RECORDING");
+setStatus("DM MOTION • RECORDING");
 }
 });
 saveVideoButton.addEventListener("click",saveRecordedVideo);
@@ -1022,9 +1022,8 @@ if(e.target===document.getElementById("menu")){
 document.getElementById("menu").classList.remove("open");
 }
 });
-const driveMenuItem=document.getElementById("driveMenuItem");
-const myDrivesMenuItem=document.getElementById("myDrivesMenuItem");
-const settingsMenuItem=document.getElementById("settingsMenuItem");
+const menuItems=[...document.querySelectorAll(".item")];
+const driveMenuItem=menuItems.find(item=>item.textContent.trim().startsWith("Drive"));
 if(driveMenuItem){
 driveMenuItem.addEventListener("click",async()=>{
 driveModeOpen=true;
@@ -1033,24 +1032,8 @@ await startCamera();
 applyPreviewOrientation();
 });
 }
-if(myDrivesMenuItem){
-myDrivesMenuItem.addEventListener("click",openDrives);
-}
-if(settingsMenuItem){
-const openSettingsFromMenu=(e)=>{
-if(e){
-e.preventDefault();
-e.stopImmediatePropagation();
-}
-if(running)return;
-updateSettingsUI();
-document.getElementById("menu").classList.remove("open");
-settingsPanel.classList.add("open");
-};
-settingsMenuItem.addEventListener("pointerup",openSettingsFromMenu,{capture:true});
-settingsMenuItem.addEventListener("touchend",openSettingsFromMenu,{capture:true});
-settingsMenuItem.addEventListener("click",openSettingsFromMenu,{capture:true});
-}
+const myDrivesMenuItem=menuItems.find(item=>item.textContent.trim().startsWith("My Drives"));
+if(myDrivesMenuItem){myDrivesMenuItem.addEventListener("click",openDrives)}
 closeSettingsButton.addEventListener("click",closeSettings);
 closeDrivesButton.addEventListener("click",closeDrives);
 drivesPanel.addEventListener("click",e=>{if(e.target===drivesPanel)closeDrives();});
@@ -1097,7 +1080,24 @@ apply();
 window.addEventListener("resize",apply,{passive:true});
 window.addEventListener("orientationchange",()=>setTimeout(apply,100),{passive:true});
 })();
-;
+(function dmFixSettingsTap(){
+const btn=document.getElementById("settingsMenuItem");
+const panel=document.getElementById("settingsPanel");
+const menu=document.getElementById("menu");
+if(!btn || !panel || !menu) return;
+function showSettings(e){
+if(e){ e.preventDefault(); e.stopPropagation(); }
+const runningState = (typeof running !== "undefined") ? running : false;
+// Settings must be reachable whenever the car is not actively recording.
+if(runningState) return;
+if(typeof updateSettingsUI === "function") updateSettingsUI();
+menu.classList.remove("open");
+panel.classList.add("open");
+}
+btn.addEventListener("pointerup",showSettings,{capture:true});
+btn.addEventListener("touchend",showSettings,{capture:true});
+btn.addEventListener("click",showSettings,{capture:true});
+})();
 </script>
 </body>
 </html>
