@@ -265,6 +265,31 @@ left:22px;transform:none;
 bottom:calc(79px + var(--safe-bottom));
 }
 }
+/* FINAL LANDSCAPE HUD SIZE OVERRIDE */
+@media screen and (min-width:700px) and (orientation:landscape){
+#hud{
+left:auto !important; right:22px !important;
+top:auto !important; bottom:calc(92px + var(--safe-bottom)) !important;
+width:480px !important; max-width:calc(100vw - 44px) !important;
+grid-template-columns:repeat(2,minmax(0,1fr)) !important;
+gap:8px !important;
+}
+#hud .card{
+min-height:54px !important; height:54px !important;
+padding:8px 10px !important;
+border-radius:12px !important;
+}
+#hud .label{font-size:7px !important; letter-spacing:1.7px !important;}
+#hud .value{font-size:13px !important; margin-top:3px !important;}
+#gforceCard .value{font-size:10px !important; line-height:1.18 !important; margin-top:3px !important;}
+#controls{
+left:22px !important; right:auto !important;
+bottom:calc(18px + var(--safe-bottom)) !important;
+justify-content:flex-start !important;
+}
+#start{width:280px !important; max-width:280px !important; height:48px !important; border-radius:16px !important;}
+#status{left:22px !important; transform:none !important; bottom:calc(79px + var(--safe-bottom)) !important;}
+}
 </style>
 </head>
 <body>
