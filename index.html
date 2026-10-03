@@ -38,9 +38,11 @@ height:78px;z-index:20;
 display:flex;justify-content:space-between;align-items:flex-start;
 padding:0 18px;pointer-events:none;
 }
-#logoBox{pointer-events:none;text-shadow:0 3px 15px #000}
+#logoBox{pointer-events:none;text-shadow:0 2px 5px rgba(0,0,0,.95)}
 #logo{
 font-size:25px;line-height:1;font-weight:950;letter-spacing:-1.5px;
+-webkit-text-stroke:0.65px rgba(0,0,0,.78);
+text-shadow:0 2px 5px rgba(0,0,0,.95);
 }
 #logo .red{color:var(--red)}
 #tagline{
@@ -625,17 +627,26 @@ const speedSize=Math.max(42,Math.round(66*scale));
 const unitSize=Math.max(13,Math.round(18*scale));
 const dataSize=Math.max(16,Math.round(23*scale));
 const radius=Math.max(10,Math.round(14*scale));
-// Very subtle top-left branding.
+// Very subtle top-left branding with a thin dark outline so the logo stays visible on bright backgrounds.
 ctx.save();
 ctx.font=`800 ${logoSize}px Arial, sans-serif`;
 ctx.textBaseline="top";
+ctx.lineWidth=Math.max(1.5,Math.round(2.2*scale));
+ctx.strokeStyle="rgba(0,0,0,.72)";
+ctx.lineJoin="round";
+ctx.shadowColor="rgba(0,0,0,.45)";
+ctx.shadowBlur=Math.max(2,Math.round(4*scale));
+ctx.shadowOffsetY=Math.max(1,Math.round(1.5*scale));
 ctx.fillStyle="rgba(255,255,255,.96)";
+ctx.strokeText("DM",pad,pad);
 ctx.fillText("DM",pad,pad);
 const dmWidth=ctx.measureText("DM").width;
 ctx.fillStyle="rgba(230,30,40,.98)";
+ctx.strokeText("//",pad+dmWidth+Math.round(3*scale),pad);
 ctx.fillText("//",pad+dmWidth+Math.round(3*scale),pad);
 const slashWidth=ctx.measureText("//").width;
 ctx.fillStyle="rgba(255,255,255,.96)";
+ctx.strokeText("MOTION",pad+dmWidth+slashWidth+Math.round(7*scale),pad);
 ctx.fillText("MOTION",pad+dmWidth+slashWidth+Math.round(7*scale),pad);
 // Keep the recorded-video branding clean: DM//MOTION only.
 ctx.restore();
