@@ -642,8 +642,8 @@ applyPreviewOrientation();
 function openSettings(){
 if(running)return;
 updateSettingsUI();
-settingsPanel.classList.add("open");
 document.getElementById("menu").classList.remove("open");
+settingsPanel.classList.add("open");
 }
 function closeSettings(){settingsPanel.classList.remove("open")}
 qualityButtons.forEach(btn=>btn.addEventListener("click",()=>{
@@ -1208,25 +1208,45 @@ document.getElementById("menu").classList.remove("open");
 }
 });
 const menuItems=[...document.querySelectorAll(".item")];
-const driveMenuItem=menuItems.find(item=>item.textContent.trim().startsWith("Drive"));
+const driveMenuItem=document.getElementById("driveMenuItem");
 if(driveMenuItem){
-driveMenuItem.addEventListener("click",async()=>{
+driveMenuItem.addEventListener("click",async(e)=>{
+e.preventDefault();
+e.stopPropagation();
 driveModeOpen=true;
 document.getElementById("menu").classList.remove("open");
 await startCamera();
 applyPreviewOrientation();
 });
 }
-const myDrivesMenuItem=menuItems.find(item=>item.textContent.trim().startsWith("My Drives"));
-if(myDrivesMenuItem){myDrivesMenuItem.addEventListener("click",openDrives)}
+const myDrivesMenuItem=document.getElementById("myDrivesMenuItem");
+if(myDrivesMenuItem){
+myDrivesMenuItem.addEventListener("click",(e)=>{
+e.preventDefault();
+e.stopPropagation();
+openDrives();
+});
+}
 const settingsMenuItem=document.getElementById("settingsMenuItem");
 if(settingsMenuItem){
 settingsMenuItem.addEventListener("click",(e)=>{
 e.preventDefault();
 e.stopPropagation();
+e.stopImmediatePropagation();
+if(running)return;
 openSettings();
-});
+},true);
 }
+// Capture the Settings tap before any parent/menu handler can process it.
+document.getElementById("menu").addEventListener("click",(e)=>{
+const settings=e.target.closest("#settingsMenuItem");
+if(settings){
+e.preventDefault();
+e.stopPropagation();
+e.stopImmediatePropagation();
+if(!running)openSettings();
+}
+},true);
 closeSettingsButton.addEventListener("click",closeSettings);
 closeDrivesButton.addEventListener("click",closeDrives);
 drivesPanel.addEventListener("click",e=>{if(e.target===drivesPanel)closeDrives();});
