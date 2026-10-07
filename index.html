@@ -161,8 +161,8 @@ color:#fff;font-size:15px;text-align:left;
 .item span{color:#666;font-size:20px}
 #drivesPanel{position:fixed;inset:0;z-index:80;display:none;background:rgba(0,0,0,.92);padding:22px 16px;}
 #drivesPanel.open{display:block;}
-.drivesSheet{width:100%;max-width:560px;margin:0 auto;padding:18px 16px 24px;border:1px solid rgba(255,255,255,.18);border-radius:24px;background:rgba
-(18,18,18,.96);box-sizing:border-box;}
+.drivesSheet{width:100%;max-width:560px;margin:0 auto;padding:18px 16px 24px;border:1px solid rgba(255,255,255,.
+18);border-radius:24px;background:rgba(18,18,18,.96);box-sizing:border-box;}
 .drivesHead{display:flex;justify-content:space-between;align-items:center;margin-bottom:24px;}
 .drivesTitle{font-size:25px;font-weight:900;letter-spacing:-.6px;}
 .drivesClose{border:0;background:none;color:#fff;font-size:30px;line-height:1;padding:0 4px;}
@@ -194,7 +194,8 @@ box-shadow:0 25px 80px rgba(0,0,0,.55);
 .settingOption{
 min-height:54px;border:1px solid rgba(255,255,255,.14);border-radius:13px;
 background:rgba(255,255,255,.035);color:#fff;font:800 13px -apple-system,BlinkMacSystemFont,"SF Pro Display",
-"Helvetica Neue",Arial,sans-serif;
+"Helvetica
+Neue",Arial,sans-serif;
 letter-spacing:.5px;
 }
 .settingOption.selected{
@@ -217,112 +218,244 @@ display:flex;justify-content:space-between;gap:12px;align-items:center;
 #speed{font-size:45px}
 }
 @media (orientation:landscape){
-#header{padding:0 24px;height:82px}
+#header{
+padding:0 24px;height:82px;
+}
 #logo{font-size:23px}
 #tagline{font-size:8px}
-#speedBox{position:absolute;right:82px;top:0}
+/* Speed gets its own space; menu sits separately at the far right. */
+#speedBox{
+position:absolute;
+right:82px;
+top:0;
+}
 #speed{font-size:44px}
 #speedUnit{font-size:9px}
 #rec{left:24px;top:calc(68px + var(--safe-top))}
-#menuBtn{right:22px;top:calc(16px + var(--safe-top));width:42px;height:42px}
-#hud{left:auto;right:22px;top:auto;bottom:calc(18px + var(--safe-bottom));width:min(250px,27vw);grid-template-columns:1fr 1fr;gap:7px}
-.card{min-height:50px;padding:6px 8px;border-radius:11px}
-.label{font-size:7px;letter-spacing:1.7px}
-.value{margin-top:3px;font-size:13px;letter-spacing:-.2px}
-#controls{left:22px;right:auto;bottom:calc(18px + var(--safe-bottom));justify-content:flex-start}
+#menuBtn{
+right:22px;
+top:calc(16px + var(--safe-top));
+width:42px;height:42px;
+}
+/* Telemetry becomes a clean right-side rail instead of floating in the middle. */
+#hud{
+left:auto;
+right:22px;
+top:auto;
+bottom:calc(18px + var(--safe-bottom));
+width:min(250px,27vw);
+grid-template-columns:1fr 1fr;
+gap:7px;
+}
+.card{
+min-height:50px;
+padding:6px 8px;
+border-radius:11px;
+}
+.label{
+font-size:7px;
+letter-spacing:1.7px;
+}
+.value{
+margin-top:3px;
+font-size:13px;
+letter-spacing:-.2px;
+}
+#controls{
+left:22px;right:auto;
+bottom:calc(18px + var(--safe-bottom));
+justify-content:flex-start;
+}
 #start{width:min(280px,32vw);height:48px}
-#status{left:22px;transform:none;bottom:calc(79px + var(--safe-bottom))}
+#status{
+left:22px;transform:none;
+bottom:calc(79px + var(--safe-bottom));
 }
+}
+/* FINAL LANDSCAPE HUD SIZE OVERRIDE */
 @media screen and (min-width:700px) and (orientation:landscape){
-#hud{left:auto !important;right:22px !important;top:auto !important;bottom:calc(92px + var(--safe-bottom)) !important;width:480px !important;max-width
-:calc(100vw - 44px) !important;grid-template-columns:repeat(2,minmax(0,1fr)) !important;gap:8px !important}
-#hud .card{min-height:54px !important;height:54px !important;padding:8px 10px !important;border-radius:12px !important}
-#hud .label{font-size:7px !important;letter-spacing:1.7px !important}
-#hud .value{font-size:13px !important;margin-top:3px !important}
-#gforceCard .value{font-size:10px !important;line-height:1.18 !important;margin-top:3px !important}
-#controls{left:22px !important;right:auto !important;bottom:calc(18px + var(--safe-bottom)) !important;justify-content:flex-start !important}
-#start{width:280px !important;max-width:280px !important;height:48px !important;border-radius:16px !important}
-#status{left:22px !important;transform:none !important;bottom:calc(79px + var(--safe-bottom)) !important}
+#hud{
+left:auto !important; right:22px !important;
+top:auto !important; bottom:calc(92px + var(--safe-bottom)) !important;
+width:480px !important; max-width:calc(100vw - 44px) !important;
+grid-template-columns:repeat(2,minmax(0,1fr)) !important;
+gap:8px !important;
 }
+#hud .card{
+min-height:54px !important; height:54px !important;
+padding:8px 10px !important;
+border-radius:12px !important;
+}
+#hud .label{font-size:7px !important; letter-spacing:1.7px !important;}
+#hud .value{font-size:13px !important; margin-top:3px !important;}
+#gforceCard .value{font-size:10px !important; line-height:1.18 !important; margin-top:3px !important;}
+#controls{
+left:22px !important; right:auto !important;
+bottom:calc(18px + var(--safe-bottom)) !important;
+justify-content:flex-start !important;
+}
+#start{width:280px !important; max-width:280px !important; height:48px !important; border-radius:16px !important;}
+#status{left:22px !important; transform:none !important; bottom:calc(79px + var(--safe-bottom)) !important;}
+}
+/* COMPACT LANDSCAPE HUD — portrait untouched */
 @media screen and (min-width:700px) and (orientation:landscape){
-#hud{left:auto !important;right:22px !important;top:auto !important;bottom:calc(86px + var(--safe-bottom)) !important;width:320px !important;max-width
-:320px !important;grid-template-columns:repeat(2,1fr) !important;gap:6px !important}
-#hud .card{min-height:44px !important;height:44px !important;padding:6px 8px !important;border-radius:10px !important}
-#hud .label{font-size:6px !important;letter-spacing:1.5px !important}
-#hud .value{margin-top:2px !important;font-size:11px !important;letter-spacing:-.1px !important}
-#gforceCard .value{font-size:9px !important;line-height:1.12 !important;margin-top:2px !important}
-#status{left:auto !important;right:22px !important;transform:none !important;bottom:calc(67px + var(--safe-bottom)) !important;font-size:7px !importan
-t}
-#controls{left:auto !important;right:22px !important;bottom:calc(16px + var(--safe-bottom)) !important;justify-content:flex-end !important}
-#start{width:240px !important;max-width:240px !important;height:44px !important;border-radius:14px !important;font-size:12px !important}
+#hud{
+left:auto !important;
+right:22px !important;
+top:auto !important;
+bottom:calc(86px + var(--safe-bottom)) !important;
+width:320px !important;
+max-width:320px !important;
+grid-template-columns:repeat(2, 1fr) !important;
+gap:6px !important;
 }
+#hud .card{
+min-height:44px !important;
+height:44px !important;
+padding:6px 8px !important;
+border-radius:10px !important;
+}
+#hud .label{
+font-size:6px !important;
+letter-spacing:1.5px !important;
+}
+#hud .value{
+margin-top:2px !important;
+font-size:11px !important;
+letter-spacing:-.1px !important;
+}
+#gforceCard .value{
+font-size:9px !important;
+line-height:1.12 !important;
+margin-top:2px !important;
+}
+#status{
+left:auto !important;
+right:22px !important;
+transform:none !important;
+bottom:calc(67px + var(--safe-bottom)) !important;
+font-size:7px !important;
+}
+#controls{
+left:auto !important;
+right:22px !important;
+bottom:calc(16px + var(--safe-bottom)) !important;
+justify-content:flex-end !important;
+}
+#start{
+width:240px !important;
+max-width:240px !important;
+height:44px !important;
+border-radius:14px !important;
+font-size:12px !important;
+}
+}
+/* Robust iPhone landscape detection: based on the actual viewport ratio. */
 body.dm-landscape #hud{
-left:auto !important;right:22px !important;top:auto !important;bottom:calc(86px + var(--safe-bottom)) !important;width:340px !important;max-width:340p
-x !important;grid-template-columns:repeat(2,minmax(0,1fr)) !important;gap:7px !important;
+left:auto !important;
+right:22px !important;
+top:auto !important;
+bottom:calc(86px + var(--safe-bottom)) !important;
+width:340px !important;
+max-width:340px !important;
+grid-template-columns:repeat(2,minmax(0,1fr)) !important;
+gap:7px !important;
 }
-body.dm-landscape #hud .card{min-height:46px !important;height:46px !important;padding:6px 8px !important;border-radius:10px !important}
-body.dm-landscape #hud .label{font-size:6px !important;letter-spacing:1.5px !important}
-body.dm-landscape #hud .value{margin-top:2px !important;font-size:11px !important}
-body.dm-landscape #gforceCard .value{font-size:9px !important;line-height:1.12 !important}
-body.dm-landscape #status{left:auto !important;right:22px !important;transform:none !important;bottom:calc(68px + var(--safe-bottom)) !important;font-
-size:7px !important}
-body.dm-landscape #controls{left:auto !important;right:22px !important;bottom:calc(16px + var(--safe-bottom)) !important;justify-content:flex-end !imp
-ortant}
-body.dm-landscape #start{width:250px !important;max-width:250px !important;height:44px !important;border-radius:14px !important;font-size:12px !import
-ant}
+body.dm-landscape #hud .card{
+min-height:46px !important;
+height:46px !important;
+padding:6px 8px !important;
+border-radius:10px !important;
+}
+body.dm-landscape #hud .label{
+font-size:6px !important;
+letter-spacing:1.5px !important;
+}
+body.dm-landscape #hud .value{
+margin-top:2px !important;
+font-size:11px !important;
+}
+body.dm-landscape #gforceCard .value{
+font-size:9px !important;
+line-height:1.12 !important;
+}
+body.dm-landscape #status{
+left:auto !important;
+right:22px !important;
+transform:none !important;
+bottom:calc(68px + var(--safe-bottom)) !important;
+font-size:7px !important;
+}
+body.dm-landscape #controls{
+left:auto !important;
+right:22px !important;
+bottom:calc(16px + var(--safe-bottom)) !important;
+justify-content:flex-end !important;
+}
+body.dm-landscape #start{
+width:250px !important;
+max-width:250px !important;
+height:44px !important;
+border-radius:14px !important;
+font-size:12px !important;
+}
+/* FINAL REAL LANDSCAPE LAYOUT — activated by body.dm-landscape */
 body.dm-landscape #hud{
-position:absolute !important;left:auto !important;right:24px !important;top:auto !important;bottom:calc(78px + var(--safe-bottom)) !important;width:33
-0px !important;max-width:330px !important;margin:0 !important;display:grid !important;grid-template-columns:repeat(2,minmax(0,1fr)) !important;gap:6px
-!important;
+position:absolute !important;
+left:auto !important;
+right:24px !important;
+top:auto !important;
+bottom:calc(78px + var(--safe-bottom)) !important;
+width:330px !important;
+max-width:330px !important;
+margin:0 !important;
+display:grid !important;
+grid-template-columns:repeat(2,minmax(0,1fr)) !important;
+gap:6px !important;
 }
-body.dm-landscape #hud .card{min-width:0 !important;min-height:42px !important;height:42px !important;padding:5px 8px !important;border-radius:10px !i
-mportant}
-body.dm-landscape #hud .label{font-size:6px !important;line-height:1 !important;letter-spacing:1.4px !important}
-body.dm-landscape #hud .value{margin-top:2px !important;font-size:11px !important;line-height:1.05 !important}
-body.dm-landscape #gforceCard .value{font-size:8.5px !important;line-height:1.08 !important;margin-top:2px !important}
-body.dm-landscape #status{left:auto !important;right:24px !important;transform:none !important;bottom:calc(59px + var(--safe-bottom)) !important;font-
-size:7px !important;letter-spacing:1.2px !important}
-body.dm-landscape #controls{left:auto !important;right:24px !important;bottom:calc(12px + var(--safe-bottom)) !important;justify-content:flex-end !imp
-ortant}
-body.dm-landscape #start{width:230px !important;max-width:230px !important;height:42px !important;border-radius:13px !important;font-size:12px !import
-ant;letter-spacing:1.8px !important}
-/* === DM MOTION RECORDED VIDEO OVERLAY === */
-#recordOverlay{display:none}
-body.dm-recording #header,
-body.dm-recording #rec,
-body.dm-recording #menuBtn,
-body.dm-recording #hud,
-body.dm-recording #status,
-body.dm-recording #shade,
-body.dm-recording #placeholder{display:none !important}
-body.dm-recording #recordOverlay{display:block !important}
-body.dm-recording #controls{z-index:40 !important;display:flex !important}
-#recordOverlay{position:absolute;inset:0;z-index:30;pointer-events:none;color:#fff;text-shadow:0 2px 8px rgba(0,0,0,.9)}
-#recordBrand{position:absolute;left:22px;top:calc(18px + var(--safe-top));font-weight:900;letter-spacing:-1.2px}
-#recordBrand .brandMain{font-size:25px;line-height:1}
-#recordBrand .brandMain .red{color:var(--red)}
-#recordBrand .brandSub{margin-top:5px;font-size:7px;letter-spacing:2.5px;color:#ddd;font-weight:800}
-#recordSpeed{position:absolute;right:22px;top:calc(18px + var(--safe-top));text-align:right}
-#recordSpeedValue{font-size:40px;line-height:.86;font-weight:850;letter-spacing:-1.5px}
-#recordSpeedUnit{margin-top:5px;font-size:8px;letter-spacing:2px;font-weight:850;color:#ddd}
-#recordTime{position:absolute;left:22px;bottom:calc(22px + var(--safe-bottom));font-size:24px;line-height:1;font-weight:800;letter-spacing:.3px}
-#gRadar{position:absolute;right:22px;bottom:calc(20px + var(--safe-bottom));width:92px;height:92px}
-#gRadar .circle{position:absolute;inset:0;border:1px solid rgba(255,255,255,.72);border-radius:50%;background:rgba(0,0,0,.08)}
-#gRadar .circle.inner{inset:19px;border-color:rgba(255,255,255,.42)}
-#gRadar .h,#gRadar .v{position:absolute;background:rgba(255,255,255,.38)}
-#gRadar .h{left:8px;right:8px;top:50%;height:1px}
-#gRadar .v{top:8px;bottom:8px;left:50%;width:1px}
-#gDot{position:absolute;left:50%;top:50%;width:13px;height:13px;border-radius:50%;background:var(--red);box-shadow:0 0 12px rgba(255,32,40,.85);transf
-orm:translate(-50%,-50%)}
-#recordGValue{position:absolute;right:22px;bottom:calc(0px + var(--safe-bottom));font-size:13px;font-weight:850;color:var(--red);letter-spacing:.4px}
-@media (orientation:landscape){
-#recordBrand{left:24px;top:calc(18px + var(--safe-top))}
-#recordBrand .brandMain{font-size:22px}
-#recordSpeed{right:24px;top:calc(18px + var(--safe-top))}
-#recordSpeedValue{font-size:34px}
-#recordTime{left:24px;bottom:calc(18px + var(--safe-bottom));font-size:21px}
-#gRadar{right:24px;bottom:calc(26px + var(--safe-bottom));width:78px;height:78px}
-#recordGValue{right:24px;bottom:calc(2px + var(--safe-bottom));font-size:11px}
+body.dm-landscape #hud .card{
+min-width:0 !important;
+min-height:42px !important;
+height:42px !important;
+padding:5px 8px !important;
+border-radius:10px !important;
+}
+body.dm-landscape #hud .label{
+font-size:6px !important;
+line-height:1 !important;
+letter-spacing:1.4px !important;
+}
+body.dm-landscape #hud .value{
+margin-top:2px !important;
+font-size:11px !important;
+line-height:1.05 !important;
+}
+body.dm-landscape #gforceCard .value{
+font-size:8.5px !important;
+line-height:1.08 !important;
+margin-top:2px !important;
+}
+body.dm-landscape #status{
+left:auto !important;
+right:24px !important;
+transform:none !important;
+bottom:calc(59px + var(--safe-bottom)) !important;
+font-size:7px !important;
+letter-spacing:1.2px !important;
+}
+body.dm-landscape #controls{
+left:auto !important;
+right:24px !important;
+bottom:calc(12px + var(--safe-bottom)) !important;
+justify-content:flex-end !important;
+}
+body.dm-landscape #start{
+width:230px !important;
+max-width:230px !important;
+height:42px !important;
+border-radius:13px !important;
+font-size:12px !important;
+letter-spacing:1.8px !important;
 }
 </style>
 </head>
@@ -344,30 +477,12 @@ orm:translate(-50%,-50%)}
 </div>
 <div id="rec"><span id="recDot"></span>REC</div>
 <button id="menuBtn" aria-label="Menü">■</button>
-<div id="recordOverlay">
-<div id="recordBrand">
-<div class="brandMain">DM<span class="red">//</span>MOTION</div>
-<div class="brandSub">DRIVE TELEMETRY</div>
-</div>
-<div id="recordSpeed">
-<div id="recordSpeedValue">0</div>
-<div id="recordSpeedUnit">KM/H</div>
-</div>
-<div id="recordTime">00:00</div>
-<div id="gRadar">
-<div class="circle"></div>
-<div class="circle inner"></div>
-<div class="h"></div>
-<div class="v"></div>
-<div id="gDot"></div>
-</div>
-<div id="recordGValue">0.00 G</div>
-</div>
 <div id="hud">
 <div class="card"><div class="label">GPS</div><div class="value" id="gps">BEREIT</div></div>
-<div class="card" id="gforceCard"><div class="label">G-KRAFT</div><div class="value" id="gforce"><div class="gmini"><span>LATERAL</span><b id="gLatera
-l">0.00 G</b></div><div class="gmini"><span>BRAKE</span><b id="gBrake">0.00 G</b></div><div class="gmini"><span>ACCEL</span><b id="gAccel">0.00 G</b><
-/div></div></div>
+<div class="card" id="gforceCard"><div class="label">G-KRAFT</div><div class="value" id="gforce"><div
+class="gmini"><span>LATERAL</span><b id="gLateral">0.00 G</b></div><div class="gmini"><span>BRAKE</span><b
+id="gBrake">0.00
+G</b></div><div class="gmini"><span>ACCEL</span><b id="gAccel">0.00 G</b></div></div></div>
 <div class="card"><div class="label">SENSOR</div><div class="value" id="sensor">BEREIT</div></div>
 <div class="card"><div class="label">ZEIT</div><div class="value" id="time">00:00</div></div>
 </div>
@@ -377,15 +492,18 @@ l">0.00 G</b></div><div class="gmini"><span>BRAKE</span><b id="gBrake">0.00 G</b
 <div id="menu">
 <div class="panel">
 <div class="menuHead">
-<div><div class="menuTitle">DM Motion</div><div class="menuSub">DRIVE TELEMETRY</div></div>
+<div>
+<div class="menuTitle">DM Motion</div>
+<div class="menuSub">DRIVE TELEMETRY</div>
+</div>
 <button class="close" id="closeMenu">×</button>
 </div>
 <button type="button" class="item" id="driveMenuItem">Drive <span>›</span></button>
 <button type="button" class="item" id="myDrivesMenuItem">My Drives <span>›</span></button>
 <button type="button" class="item">Analysis <span>›</span></button>
 <button type="button" class="item">Tracks <span>›</span></button>
-<button type="button" class="item" id="settingsMenuItem" onclick="event.preventDefault();event.stopPropagation();openSettings();return false;">Setting
-s <span>›</span></button>
+<button type="button" class="item" id="settingsMenuItem" onclick="event.preventDefault();event.stopPropagation();
+openSettings();return false;">Settings <span>›</span></button>
 </div>
 </div>
 <div id="drivesPanel">
@@ -394,7 +512,10 @@ s <span>›</span></button>
 <div class="drivesTitle">Meine Fahrten</div>
 <button class="drivesClose" id="closeDrives" aria-label="Meine Fahrten schließen">×</button>
 </div>
-<div class="drivesEmpty"><strong>Noch keine Fahrten</strong><span>Deine gespeicherten Fahrten werden hier später angezeigt.</span></div>
+<div class="drivesEmpty">
+<strong>Noch keine Fahrten</strong>
+<span>Deine gespeicherten Fahrten werden hier später angezeigt.</span>
+</div>
 </div>
 </div>
 <div id="settingsPanel">
@@ -420,7 +541,9 @@ s <span>›</span></button>
 </div>
 </div>
 <div class="settingHint">Die gewählte Bildrate wird für die nächste Aufnahme verwendet.</div>
-<div class="settingsSummary"><span>AKTUELLE AUFNAHME</span><strong id="settingsSummaryValue">1080p / 30 FPS</strong></div>
+<div class="settingsSummary">
+<span>AKTUELLE AUFNAHME</span>
+<strong id="settingsSummaryValue">1080p / 30 FPS</strong>
 </div>
 </div>
 </div>
@@ -439,347 +562,728 @@ const sensorDisplay=document.getElementById("sensor");
 const timeDisplay=document.getElementById("time");
 const recordBadge=document.getElementById("rec");
 const statusDisplay=document.getElementById("status");
+let running=false;
+let startTime=null;
+let timer=null;
+let gpsWatch=null;
+let motionListenerAdded=false;
+let motionEvents=0;
+let gravityX=0,gravityY=0,gravityZ=0;
+let gravityReady=false;
+let filteredG=0;
+let mediaRecorder=null;
+let recordedChunks=[];
+let recordedBlob=null;
+let recordedFileName="";
+let recordingMimeType="";
 const saveVideoButton=document.getElementById("saveVideo");
-const recordSpeedValue=document.getElementById("recordSpeedValue");
-const recordTime=document.getElementById("recordTime");
-const gDot=document.getElementById("gDot");
-const recordGValue=document.getElementById("recordGValue");
-let running=false,startTime=null,timer=null,gpsWatch=null,motionListenerAdded=false,motionEvents=0;
-let gravityX=0,gravityY=0,gravityZ=0,gravityReady=false,filteredG=0;
-let mediaRecorder=null,recordedChunks=[],recordedBlob=null,recordedFileName="",recordingMimeType="";
 const settingsPanel=document.getElementById("settingsPanel");
 const drivesPanel=document.getElementById("drivesPanel");
 const closeDrivesButton=document.getElementById("closeDrives");
 function openDrives(){drivesPanel.classList.add("open");document.getElementById("menu").classList.remove("open");}
-function closeDrives(){drivesPanel.classList.remove("open")}
+function closeDrives(){drivesPanel.classList.remove("open");}
 const closeSettingsButton=document.getElementById("closeSettings");
 const settingsSummaryValue=document.getElementById("settingsSummaryValue");
 const qualityButtons=[...document.querySelectorAll("[data-quality]")];
 const fpsButtons=[...document.querySelectorAll("[data-fps]")];
-let videoQuality=localStorage.getItem("dmMotionVideoQuality")||"1080p";
-let videoFps=Number(localStorage.getItem("dmMotionVideoFps")||"30");
-let previewStream=null,driveModeOpen=true;
-const QUALITY_MAP={"1080p":{width:1920,height:1080},"2K":{width:2560,height:1440},"4K":{width:3840,height:2160}};
-let recordingPortrait=window.innerHeight>window.innerWidth;
-let recordingDrawCounter=0,recordingDrawEvery=1;
+let videoQuality=localStorage.getItem("dmMotionVideoQuality") || "1080p";
+let videoFps=Number(localStorage.getItem("dmMotionVideoFps") || "30");
+let previewStream=null;
+let driveModeOpen=true;
+const QUALITY_MAP={
+"1080p":{width:1920,height:1080},
+"2K":{width:2560,height:1440},
+"4K":{width:3840,height:2160}
+};
+// The recording orientation is determined by the phone orientation at START.
+// It stays fixed for the entire recording.
+let recordingPortrait=window.innerHeight > window.innerWidth;
+let recordingDrawCounter=0;
+let recordingDrawEvery=1;
 function getRecordingDimensions(){
-const target=QUALITY_MAP[videoQuality]||QUALITY_MAP["1080p"];
-return recordingPortrait?{width:target.height,height:target.width}:{width:target.width,height:target.height};
+const target=QUALITY_MAP[videoQuality] || QUALITY_MAP["1080p"];
+return recordingPortrait
+? {width:target.height,height:target.width}
+: {width:target.width,height:target.height};
 }
-function applyPreviewOrientation(){resizePreviewCanvas()}
+function applyPreviewOrientation(){
+resizePreviewCanvas();
+}
 function resizePreviewCanvas(){
-const c=document.getElementById("previewCanvas");if(!c)return;
+const c=document.getElementById("previewCanvas"); if(!c)return;
 const dpr=Math.min(window.devicePixelRatio||1,2);
-const w=Math.max(1,Math.round(window.innerWidth*dpr)),h=Math.max(1,Math.round(window.innerHeight*dpr));
-if(c.width!==w)c.width=w;if(c.height!==h)c.height=h;
+const w=Math.max(1,Math.round(window.innerWidth*dpr));
+const h=Math.max(1,Math.round(window.innerHeight*dpr));
+if(c.width!==w)c.width=w; if(c.height!==h)c.height=h;
 }
 function drawPreviewFrame(){
-const c=document.getElementById("previewCanvas");if(!c)return;
+const c=document.getElementById("previewCanvas"); if(!c)return;
 resizePreviewCanvas();
-const ctx=c.getContext("2d",{alpha:false}),cw=c.width,ch=c.height;
-if(camera.readyState>=2&&camera.videoWidth&&camera.videoHeight){
-const sw=camera.videoWidth,sh=camera.videoHeight,scale=Math.max(cw/sw,ch/sh),dw=sw*scale,dh=sh*scale;
+const ctx=c.getContext("2d",{alpha:false}); const cw=c.width,ch=c.height;
+if(camera.readyState>=2 && camera.videoWidth && camera.videoHeight){
+const sw=camera.videoWidth,sh=camera.videoHeight;
+const scale=Math.max(cw/sw,ch/sh);
+const dw=sw*scale,dh=sh*scale;
 ctx.fillStyle="#000";ctx.fillRect(0,0,cw,ch);ctx.drawImage(camera,(cw-dw)/2,(ch-dh)/2,dw,dh);
-}else{ctx.fillStyle="#111";ctx.fillRect(0,0,cw,ch)}
+} else { ctx.fillStyle="#111";ctx.fillRect(0,0,cw,ch); }
 requestAnimationFrame(drawPreviewFrame);
 }
-async function lockScreenOrientation(){applyPreviewOrientation()}
-function updatePreviewOrientation(){if(driveModeOpen)applyPreviewOrientation()}
-function updateRecordingPerformance(){recordingDrawEvery=(videoQuality==="4K"&&videoFps===60)?2:1;recordingDrawCounter=0}
+async function lockScreenOrientation(){
+// Never lock Safari's physical screen. Recording orientation is handled by the saved-video canvas.
+applyPreviewOrientation();
+}
+function updatePreviewOrientation(){
+if(driveModeOpen) applyPreviewOrientation();
+}
+function updateRecordingPerformance(){
+// 4K60 through a canvas is extremely demanding on iPhone Safari.
+// Keep 4K/60 available in Settings, but render the expensive 4K canvas
+// at 30 unique frames/s so it does not collapse into very low frame rates.
+recordingDrawEvery=(videoQuality==="4K" && videoFps===60) ? 2 : 1;
+recordingDrawCounter=0;
+}
 function updateSettingsUI(){
 qualityButtons.forEach(btn=>btn.classList.toggle("selected",btn.dataset.quality===videoQuality));
 fpsButtons.forEach(btn=>btn.classList.toggle("selected",Number(btn.dataset.fps)===videoFps));
-settingsSummaryValue.textContent=`${videoQuality} / ${videoFps} FPS`;applyPreviewOrientation();
+settingsSummaryValue.textContent=`${videoQuality} / ${videoFps} FPS`;
+applyPreviewOrientation();
 }
-function openSettings(){if(running)return;updateSettingsUI();document.getElementById("menu").classList.remove("open");settingsPanel.classList.add("ope
-n")}
+function openSettings(){
+if(running)return;
+updateSettingsUI();
+document.getElementById("menu").classList.remove("open");
+settingsPanel.classList.add("open");
+}
 function closeSettings(){settingsPanel.classList.remove("open")}
-qualityButtons.forEach(btn=>btn.addEventListener("click",()=>{videoQuality=btn.dataset.quality;localStorage.setItem("dmMotionVideoQuality",videoQualit
-y);updateSettingsUI()}));
-fpsButtons.forEach(btn=>btn.addEventListener("click",()=>{videoFps=Number(btn.dataset.fps);localStorage.setItem("dmMotionVideoFps",String(videoFps));u
-pdateSettingsUI()}));
+qualityButtons.forEach(btn=>btn.addEventListener("click",()=>{
+videoQuality=btn.dataset.quality;
+localStorage.setItem("dmMotionVideoQuality",videoQuality);
+updateSettingsUI();
+}));
+fpsButtons.forEach(btn=>btn.addEventListener("click",()=>{
+videoFps=Number(btn.dataset.fps);
+localStorage.setItem("dmMotionVideoFps",String(videoFps));
+updateSettingsUI();
+}));
 function setStatus(t){statusDisplay.textContent=t}
 function resetValues(){
-speedDisplay.textContent="0";gpsDisplay.textContent="BEREIT";gLateralDisplay.textContent="0.00 G";gBrakeDisplay.textContent="0.00 G";gAccelDisplay.tex
-tContent="0.00 G";sensorDisplay.textContent="BEREIT";timeDisplay.textContent="00:00";
-gravityX=0;gravityY=0;gravityZ=0;gravityReady=false;filteredG=0;motionEvents=0;
-updateRecordingPreview();
-}
-function updateRecordingPreview(){
-const speed=String(speedDisplay.textContent||"0").replace(/[^\d.-]/g,"")||"0";
-recordSpeedValue.textContent=speed;
-recordTime.textContent=timeDisplay.textContent||"00:00";
-const total=Math.max(0,Number(gforceDisplay.dataset.total||"0"));
-recordGValue.textContent=total.toFixed(2)+" G";
-const angle=Number(gforceDisplay.dataset.angle||"0");
-const maxG=.95;
-const r=Math.min(maxG,total)/maxG;
-const x=Math.sin(angle)*r;
-const y=-Math.cos(angle)*r;
-gDot.style.left=(50+x*43)+"%";
-gDot.style.top=(50+y*43)+"%";
+speedDisplay.textContent="0";
+gpsDisplay.textContent="BEREIT";
+gLateralDisplay.textContent="0.00 G";
+gBrakeDisplay.textContent="0.00 G";
+gAccelDisplay.textContent="0.00 G";
+sensorDisplay.textContent="BEREIT";
+timeDisplay.textContent="00:00";
+gravityX=0;gravityY=0;gravityZ=0;
+gravityReady=false;filteredG=0;motionEvents=0;
 }
 function handleMotion(event){
 motionEvents++;
 if(motionEvents===1)sensorDisplay.textContent="AKTIV";
 const a=event.accelerationIncludingGravity;
-if(!a||a.x===null||a.y===null||a.z===null){sensorDisplay.textContent="KEINE DATEN";return}
-const x=Number(a.x)||0,y=Number(a.y)||0,z=Number(a.z)||0,alpha=.92;
-if(!gravityReady){
-gravityX=x;gravityY=y;gravityZ=z;gravityReady=true;filteredG=0;
-gLateralDisplay.textContent="0.00 G";gBrakeDisplay.textContent="0.00 G";gAccelDisplay.textContent="0.00 G";
-gforceDisplay.dataset.total="0.00";gforceDisplay.dataset.angle="0";updateRecordingPreview();return;
+if(!a || a.x===null || a.y===null || a.z===null){
+sensorDisplay.textContent="KEINE DATEN";
+return;
 }
-gravityX=alpha*gravityX+(1-alpha)*x;gravityY=alpha*gravityY+(1-alpha)*y;gravityZ=alpha*gravityZ+(1-alpha)*z;
-const dx=x-gravityX,dy=y-gravityY,dz=z-gravityZ;
-const angle=(screen.orientation&&typeof screen.orientation.angle==="number")?screen.orientation.angle:(window.orientation||0);
-let lateral=dx,longitudinal=dy;
-if(angle===90){lateral=dy;longitudinal=-dx}else if(angle===180){lateral=-dx;longitudinal=-dy}else if(angle===270){lateral=-dy;longitudinal=dx}
-const lateralG=Math.abs(lateral)/9.80665,brakeG=Math.max(0,-longitudinal)/9.80665,accelG=Math.max(0,longitudinal)/9.80665;
+const x=Number(a.x)||0;
+const y=Number(a.y)||0;
+const z=Number(a.z)||0;
+const alpha=.92;
+if(!gravityReady){
+gravityX=x;gravityY=y;gravityZ=z;
+gravityReady=true;
+filteredG=0;
+gLateralDisplay.textContent="0.00 G";
+gBrakeDisplay.textContent="0.00 G";
+gAccelDisplay.textContent="0.00 G";
+gforceDisplay.dataset.total="0.00";
+return;
+}
+gravityX=alpha*gravityX+(1-alpha)*x;
+gravityY=alpha*gravityY+(1-alpha)*y;
+gravityZ=alpha*gravityZ+(1-alpha)*z;
+const dx=x-gravityX;
+const dy=y-gravityY;
+const dz=z-gravityZ;
+// Map the phone axes to driving axes using the current screen orientation.
+// Assumption for this first version: phone top points roughly toward the car's front.
+const angle=(screen.orientation && typeof screen.orientation.angle === "number")
+? screen.orientation.angle
+: (window.orientation || 0);
+let lateral=dx;
+let longitudinal=dy;
+if(angle===90){ lateral=dy; longitudinal=-dx; }
+else if(angle===180){ lateral=-dx; longitudinal=-dy; }
+else if(angle===270){ lateral=-dy; longitudinal=dx; }
+const lateralG=Math.abs(lateral)/9.80665;
+const brakeG=Math.max(0,-longitudinal)/9.80665;
+const accelG=Math.max(0,longitudinal)/9.80665;
 const totalG=Math.sqrt(dx*dx+dy*dy+dz*dz)/9.80665;
 filteredG=filteredG*.75+totalG*.25;
 gforceDisplay.dataset.total=filteredG.toFixed(2);
-gforceDisplay.dataset.angle=Math.atan2(longitudinal,lateral).toFixed(4);
-gLateralDisplay.textContent=lateralG.toFixed(2)+" G";gBrakeDisplay.textContent=brakeG.toFixed(2)+" G";gAccelDisplay.textContent=accelG.toFixed(2)+" G"
-;
-updateRecordingPreview();
+gLateralDisplay.textContent=lateralG.toFixed(2)+" G";
+gBrakeDisplay.textContent=brakeG.toFixed(2)+" G";
+gAccelDisplay.textContent=accelG.toFixed(2)+" G";
 }
 async function startMotion(){
 sensorDisplay.textContent="PRÜFE...";
-if(!window.DeviceMotionEvent){sensorDisplay.textContent="NICHT VERFÜGBAR";return false}
+if(!window.DeviceMotionEvent){
+sensorDisplay.textContent="NICHT VERFÜGBAR";
+return false;
+}
 try{
 if(typeof DeviceMotionEvent.requestPermission==="function"){
 const permission=await DeviceMotionEvent.requestPermission();
-if(permission!=="granted"){sensorDisplay.textContent="KEINE FREIGABE";return false}
+if(permission!=="granted"){
+sensorDisplay.textContent="KEINE FREIGABE";
+return false;
 }
-if(!motionListenerAdded){window.addEventListener("devicemotion",handleMotion);motionListenerAdded=true}
-sensorDisplay.textContent="WARTEN";motionEvents=0;
-setTimeout(()=>{if(running&&motionEvents===0)sensorDisplay.textContent="KEIN SIGNAL"},2500);
+}
+if(!motionListenerAdded){
+window.addEventListener("devicemotion",handleMotion);
+motionListenerAdded=true;
+}
+sensorDisplay.textContent="WARTEN";
+motionEvents=0;
+setTimeout(()=>{
+if(running && motionEvents===0)sensorDisplay.textContent="KEIN SIGNAL";
+},2500);
 return true;
-}catch(error){console.log(error);sensorDisplay.textContent="FEHLER";return false}
+}catch(error){
+console.log(error);
+sensorDisplay.textContent="FEHLER";
+return false;
+}
 }
 function chooseRecordingMimeType(){
 if(!window.MediaRecorder)return "";
-const types=["video/mp4;codecs=avc1.64003E,mp4a.40.2","video/mp4;codecs=avc1.42001E,mp4a.40.2","video/mp4","video/webm;codecs=h264,opus","video/webm"]
-;
-for(const type of types){try{if(MediaRecorder.isTypeSupported(type))return type}catch(error){}}
+const types=[
+"video/mp4;codecs=avc1.64003E,mp4a.40.2",
+"video/mp4;codecs=avc1.42001E,mp4a.40.2",
+"video/mp4",
+"video/webm;codecs=h264,opus",
+"video/webm"
+];
+for(const type of types){
+try{
+if(MediaRecorder.isTypeSupported(type))return type;
+}catch(error){}
+}
 return "";
 }
-function prepareSaveButton(){saveVideoButton.style.display="none";saveVideoButton.disabled=true;recordedBlob=null;recordedChunks=[];recordedFileName="
-";recordingMimeType=""}
-let recordingCanvas=null,recordingCanvasCtx=null,recordingCanvasStream=null,recordingAnimationFrame=null,recordingStartedAt=0;
+function prepareSaveButton(){
+saveVideoButton.style.display="none";
+saveVideoButton.disabled=true;
+recordedBlob=null;
+recordedChunks=[];
+recordedFileName="";
+recordingMimeType="";
+}
+let recordingCanvas=null;
+let recordingCanvasCtx=null;
+let recordingCanvasStream=null;
+let recordingAnimationFrame=null;
+let recordingStartedAt=0;
 function drawRecordingOverlay(){
-if(!recordingCanvas||!recordingCanvasCtx||!camera.videoWidth||!camera.videoHeight){recordingAnimationFrame=requestAnimationFrame(drawRecordingOverlay)
-;return}
-const ctx=recordingCanvasCtx,w=recordingCanvas.width,h=recordingCanvas.height;
+if(!recordingCanvas || !recordingCanvasCtx || !camera.videoWidth || !camera.videoHeight){
+recordingAnimationFrame=requestAnimationFrame(drawRecordingOverlay);
+return;
+}
+const ctx=recordingCanvasCtx;
+const w=recordingCanvas.width;
+const h=recordingCanvas.height;
+// On 4K/60 we intentionally update the heavy 4K canvas every second
+// animation frame. The captured stream remains configured for 60 FPS,
+// while duplicate frames keep playback smooth instead of stuttering badly.
 recordingDrawCounter++;
-if(recordingDrawCounter%recordingDrawEvery!==0){recordingAnimationFrame=requestAnimationFrame(drawRecordingOverlay);return}
-ctx.fillStyle="#000";ctx.fillRect(0,0,w,h);
-const sourceW=camera.videoWidth,sourceH=camera.videoHeight;
+if(recordingDrawCounter % recordingDrawEvery !== 0){
+recordingAnimationFrame=requestAnimationFrame(drawRecordingOverlay);
+return;
+}
+ctx.fillStyle="#000";
+ctx.fillRect(0,0,w,h);
+const sourceW=camera.videoWidth || w;
+const sourceH=camera.videoHeight || h;
+// Use the actual decoded camera orientation. This is important on iPhone:
+// the live <video> may already be correctly oriented even when Safari reports
+// a landscape pixel buffer. Rotate only when the source aspect ratio proves
+// that the frame really needs a 90° rotation for the requested output.
 function drawCover(targetW,targetH){
-const sourceRatio=sourceW/sourceH,targetRatio=targetW/targetH;
+const sourceRatio=sourceW/sourceH;
+const targetRatio=targetW/targetH;
 let sx=0,sy=0,sw=sourceW,sh=sourceH;
-if(sourceRatio>targetRatio){sw=sourceH*targetRatio;sx=(sourceW-sw)/2}else if(sourceRatio<targetRatio){sh=sourceW/targetRatio;sy=(sourceH-sh)/2}
+if(sourceRatio>targetRatio){
+sw=sourceH*targetRatio;
+sx=(sourceW-sw)/2;
+}else if(sourceRatio<targetRatio){
+sh=sourceW/targetRatio;
+sy=(sourceH-sh)/2;
+}
 ctx.drawImage(camera,sx,sy,sw,sh,0,0,targetW,targetH);
 }
-if(recordingPortrait&&sourceW>sourceH){ctx.save();ctx.translate(0,h);ctx.rotate(Math.PI/2);drawCover(h,w);ctx.restore()}
-else if(!recordingPortrait&&sourceH>sourceW){ctx.save();ctx.translate(w,0);ctx.rotate(-Math.PI/2);drawCover(h,w);ctx.restore()}
-else drawCover(w,h);
-const scale=Math.max(w,h)/1280,pad=Math.max(24,Math.round(30*scale));
-const logoSize=Math.max(20,Math.round(30*scale)),speedSize=Math.max(36,Math.round(54*scale)),unitSize=Math.max(11,Math.round(15*scale));
-const timeSize=Math.max(17,Math.round(22*scale)),radarSize=Math.max(74,Math.round(96*scale));
-ctx.save();ctx.textBaseline="top";ctx.lineJoin="round";ctx.lineWidth=Math.max(1.5,Math.round(2*scale));ctx.strokeStyle="rgba(0,0,0,.72)";ctx.shadowCol
-or="rgba(0,0,0,.45)";ctx.shadowBlur=Math.max(2,Math.round(4*scale));ctx.shadowOffsetY=Math.max(1,Math.round(1.5*scale));
-ctx.font=`800 ${logoSize}px Arial,sans-serif`;ctx.fillStyle="rgba(255,255,255,.96)";ctx.strokeText("DM",pad,pad);ctx.fillText("DM",pad,pad);
-const dmWidth=ctx.measureText("DM").width;ctx.fillStyle="rgba(230,30,40,.98)";ctx.strokeText("//",pad+dmWidth+Math.round(3*scale),pad);ctx.fillText("/
-/",pad+dmWidth+Math.round(3*scale),pad);
-const slashWidth=ctx.measureText("//").width;ctx.fillStyle="rgba(255,255,255,.96)";ctx.strokeText("MOTION",pad+dmWidth+slashWidth+Math.round(7*scale),
-pad);ctx.fillText("MOTION",pad+dmWidth+slashWidth+Math.round(7*scale),pad);ctx.restore();
-ctx.save();ctx.textAlign="right";ctx.textBaseline="top";ctx.font=`800 ${speedSize}px Arial,sans-serif`;ctx.fillStyle="rgba(255,255,255,.97)";ctx.fillT
-ext(String(speedDisplay.textContent||"0"),w-pad,pad);ctx.font=`700 ${unitSize}px Arial,sans-serif`;ctx.fillStyle="rgba(255,255,255,.72)";ctx.fillText(
-"KM/H",w-pad,pad+speedSize+Math.round(3*scale));ctx.restore();
-const timeText=timeDisplay.textContent||"00:00";
-ctx.save();ctx.textAlign="left";ctx.textBaseline="bottom";ctx.font=`800 ${timeSize}px Arial,sans-serif`;ctx.fillStyle="rgba(255,255,255,.96)";ctx.fill
-Text(timeText,pad,h-pad);ctx.restore();
-const total=Math.max(0,Number(gforceDisplay.dataset.total||"0")),angle=Number(gforceDisplay.dataset.angle||"0"),r=Math.min(1,total/.95);
-const radarR=radarSize/2;
-const radarX=w-pad-radarSize/2,radarY=h-pad-radarSize/2-8;
+// The saved video uses the fixed orientation selected in Settings.
+// The phone may rotate physically, but the recording canvas dimensions never change.
+if(recordingPortrait && sourceW>sourceH){
 ctx.save();
-ctx.translate(radarX,radarY);
-ctx.strokeStyle="rgba(255,255,255,.78)";ctx.lineWidth=Math.max(1,Math.round(scale));
-ctx.fillStyle="rgba(0,0,0,.08)";
-ctx.beginPath();ctx.arc(0,0,radarR,0,Math.PI*2);ctx.fill();ctx.stroke();
-ctx.strokeStyle="rgba(255,255,255,.40)";ctx.beginPath();ctx.arc(0,0,radarR*.43,0,Math.PI*2);ctx.stroke();
-ctx.strokeStyle="rgba(255,255,255,.38)";
-ctx.beginPath();ctx.moveTo(-radarR*.82,0);ctx.lineTo(radarR*.82,0);ctx.moveTo(0,-radarR*.82);ctx.lineTo(0,radarR*.82);ctx.stroke();
-const dotX=Math.sin(angle)*r*radarR*.82,dotY=-Math.cos(angle)*r*radarR*.82;
-ctx.fillStyle="#ff2028";ctx.shadowColor="rgba(255,32,40,.85)";ctx.shadowBlur=Math.max(6,Math.round(10*scale));ctx.beginPath();ctx.arc(dotX,dotY,Math.m
-ax(5,Math.round(6*scale)),0,Math.PI*2);ctx.fill();ctx.restore();
-ctx.save();ctx.textAlign="right";ctx.textBaseline="top";ctx.font=`850 ${Math.max(12,Math.round(15*scale))}px Arial,sans-serif`;ctx.fillStyle="#ff2028"
-;ctx.fillText(total.toFixed(2)+" G",w-pad,h-pad+3);ctx.restore();
+ctx.translate(0,h);
+ctx.rotate(Math.PI/2);
+drawCover(h,w);
+ctx.restore();
+}else if(!recordingPortrait && sourceH>sourceW){
+ctx.save();
+ctx.translate(w,0);
+ctx.rotate(-Math.PI/2);
+drawCover(h,w);
+ctx.restore();
+}else{
+drawCover(w,h);
+}
+const scale=Math.max(w,h)/1280;
+const pad=Math.max(24,Math.round(30*scale));
+const small=Math.max(14,Math.round(18*scale));
+const logoSize=Math.max(20,Math.round(30*scale));
+const speedSize=Math.max(42,Math.round(66*scale));
+const unitSize=Math.max(13,Math.round(18*scale));
+const dataSize=Math.max(16,Math.round(23*scale));
+const radius=Math.max(10,Math.round(14*scale));
+// Very subtle top-left branding with a thin dark outline so the logo stays visible on bright backgrounds.
+ctx.save();
+ctx.font=`800 ${logoSize}px Arial, sans-serif`;
+ctx.textBaseline="top";
+ctx.lineWidth=Math.max(1.5,Math.round(2.2*scale));
+ctx.strokeStyle="rgba(0,0,0,.72)";
+ctx.lineJoin="round";
+ctx.shadowColor="rgba(0,0,0,.45)";
+ctx.shadowBlur=Math.max(2,Math.round(4*scale));
+ctx.shadowOffsetY=Math.max(1,Math.round(1.5*scale));
+ctx.fillStyle="rgba(255,255,255,.96)";
+ctx.strokeText("DM",pad,pad);
+ctx.fillText("DM",pad,pad);
+const dmWidth=ctx.measureText("DM").width;
+ctx.fillStyle="rgba(230,30,40,.98)";
+ctx.strokeText("//",pad+dmWidth+Math.round(3*scale),pad);
+ctx.fillText("//",pad+dmWidth+Math.round(3*scale),pad);
+const slashWidth=ctx.measureText("//").width;
+ctx.fillStyle="rgba(255,255,255,.96)";
+ctx.strokeText("MOTION",pad+dmWidth+slashWidth+Math.round(7*scale),pad);
+ctx.fillText("MOTION",pad+dmWidth+slashWidth+Math.round(7*scale),pad);
+// Keep the recorded-video branding clean: DM//MOTION only.
+ctx.restore();
+// Speed top-right.
+const speed=String(speedDisplay.textContent||"0");
+ctx.save();
+ctx.textAlign="right";
+ctx.textBaseline="top";
+ctx.font=`800 ${speedSize}px Arial, sans-serif`;
+ctx.fillStyle="rgba(255,255,255,.97)";
+ctx.fillText(speed,w-pad,pad);
+ctx.font=`700 ${unitSize}px Arial, sans-serif`;
+ctx.fillStyle="rgba(255,255,255,.72)";
+ctx.fillText("KM/H",w-pad,pad+speedSize+Math.round(4*scale));
+ctx.restore();
+// Bottom-right telemetry: three driving G values + elapsed time.
+const lateralText=String(gLateralDisplay.textContent||"0.00 G");
+const brakeText=String(gBrakeDisplay.textContent||"0.00 G");
+const accelText=String(gAccelDisplay.textContent||"0.00 G");
+const timeText=String(timeDisplay.textContent||"00:00");
+const boxPad=Math.max(16,Math.round(18*scale));
+const boxW=Math.max(190,Math.round(225*scale));
+const line=Math.max(20,Math.round(23*scale));
+const textTop=Math.max(7,Math.round(8*scale));
+const timeSize=Math.max(19,Math.round(dataSize*1.18));
+const timeVisualH=Math.max(20,Math.round(timeSize*.90));
+const boxH=textTop*2+(line*3)+timeVisualH;
+const boxX=w-boxPad-boxW;
+const boxY=h-boxPad-boxH;
+ctx.save();
+ctx.fillStyle="rgba(0,0,0,.18)";
+ctx.strokeStyle="rgba(255,255,255,.20)";
+ctx.lineWidth=Math.max(1,Math.round(scale));
+ctx.beginPath();
+ctx.roundRect(boxX,boxY,boxW,boxH,radius);
+ctx.fill();
+ctx.stroke();
+ctx.textAlign="left";
+ctx.textBaseline="top";
+ctx.font=`800 ${dataSize}px Arial, sans-serif`;
+ctx.fillStyle="rgba(255,255,255,.96)";
+const textX=boxX+Math.round(12*scale);
+ctx.fillText(`LATERAL ${lateralText}`,textX,boxY+textTop);
+ctx.fillText(`BRAKE ${brakeText}`,textX,boxY+textTop+line);
+ctx.fillText(`ACCEL ${accelText}`,textX,boxY+textTop+(line*2));
+ctx.font=`800 ${timeSize}px Arial, sans-serif`;
+ctx.fillStyle="rgba(255,255,255,.96)";
+ctx.fillText(timeText,textX,boxY+textTop+(line*3));
+ctx.restore();
 recordingAnimationFrame=requestAnimationFrame(drawRecordingOverlay);
 }
 function createRecordingStream(cameraStream){
-if(!HTMLCanvasElement.prototype.captureStream)return null;
+// iOS Safari does not provide HTMLVideoElement.captureStream().
+// The telemetry video is generated from the canvas, so only canvas.captureStream() is required.
+if(!HTMLCanvasElement.prototype.captureStream){
+return null;
+}
 recordingCanvas=document.createElement("canvas");
-const dimensions=getRecordingDimensions();recordingCanvas.width=dimensions.width;recordingCanvas.height=dimensions.height;
-recordingCanvasCtx=recordingCanvas.getContext("2d",{alpha:false});updateRecordingPerformance();
+const dimensions=getRecordingDimensions();
+// Output dimensions are true 9:16 in portrait and 16:9 in landscape.
+// No 4:3 output is used.
+recordingCanvas.width=dimensions.width;
+recordingCanvas.height=dimensions.height;
+recordingCanvasCtx=recordingCanvas.getContext("2d",{alpha:false});
+updateRecordingPerformance();
 recordingCanvasStream=recordingCanvas.captureStream(videoFps);
-const audioTracks=cameraStream.getAudioTracks();if(audioTracks.length)recordingCanvasStream.addTrack(audioTracks[0]);
-recordingStartedAt=Date.now();recordingAnimationFrame=requestAnimationFrame(drawRecordingOverlay);return recordingCanvasStream;
+const audioTracks=cameraStream.getAudioTracks();
+if(audioTracks.length){
+recordingCanvasStream.addTrack(audioTracks[0]);
+}
+recordingStartedAt=Date.now();
+recordingAnimationFrame=requestAnimationFrame(drawRecordingOverlay);
+return recordingCanvasStream;
 }
 function stopRecordingCanvas(){
-if(recordingAnimationFrame){cancelAnimationFrame(recordingAnimationFrame);recordingAnimationFrame=null}
-if(recordingCanvasStream)recordingCanvasStream.getTracks().forEach(track=>track.stop());
-recordingCanvasStream=null;recordingCanvas=null;recordingCanvasCtx=null;
+if(recordingAnimationFrame){
+cancelAnimationFrame(recordingAnimationFrame);
+recordingAnimationFrame=null;
+}
+if(recordingCanvasStream){
+recordingCanvasStream.getTracks().forEach(track=>track.stop());
+}
+recordingCanvasStream=null;
+recordingCanvas=null;
+recordingCanvasCtx=null;
 }
 async function startRecording(cameraStream){
-if(!window.MediaRecorder){setStatus("AUFNAHME NICHT VERFÜGBAR");return false}
+if(!window.MediaRecorder){
+setStatus("AUFNAHME NICHT VERFÜGBAR");
+return false;
+}
 try{
 await new Promise(resolve=>{
 const waitStart=performance.now();
 const waitFrame=()=>{
-if(camera.readyState>=2&&camera.videoWidth>0&&camera.videoHeight>0){requestAnimationFrame(()=>resolve());return}
-if(performance.now()-waitStart>2500){resolve();return}
-requestAnimationFrame(waitFrame)
-};waitFrame();
+if(camera.readyState>=2 && camera.videoWidth>0 && camera.videoHeight>0){
+requestAnimationFrame(()=>resolve());
+return;
+}
+if(performance.now()-waitStart>2500){
+resolve();
+return;
+}
+requestAnimationFrame(waitFrame);
+};
+waitFrame();
 });
-recordedChunks=[];recordedBlob=null;recordingMimeType=chooseRecordingMimeType();
+recordedChunks=[];
+recordedBlob=null;
+recordingMimeType=chooseRecordingMimeType();
 const recordingStream=createRecordingStream(cameraStream);
-if(!recordingStream){setStatus("TELEMETRIE-VIDEO NICHT VERFÜGBAR");return false}
-const options=recordingMimeType?{mimeType:recordingMimeType}:{};
+if(!recordingStream){
+setStatus("TELEMETRIE-VIDEO NICHT VERFÜGBAR");
+return false;
+}
+const options=recordingMimeType
+? {mimeType:recordingMimeType}
+: {};
 mediaRecorder=new MediaRecorder(recordingStream,options);
-mediaRecorder.ondataavailable=event=>{if(event.data&&event.data.size>0)recordedChunks.push(event.data)};
-mediaRecorder.onerror=event=>{console.log("Recorder:",event);stopRecordingCanvas();setStatus("AUFNAHMEFEHLER")};
+mediaRecorder.ondataavailable=(event)=>{
+if(event.data && event.data.size>0){
+recordedChunks.push(event.data);
+}
+};
+mediaRecorder.onerror=(event)=>{
+console.log("Recorder:",event);
+stopRecordingCanvas();
+setStatus("AUFNAHMEFEHLER");
+};
 mediaRecorder.onstop=()=>{
 stopRecordingCanvas();
-if(!recordedChunks.length){setStatus("KEIN VIDEO ERSTELLT");return}
-const type=mediaRecorder.mimeType||recordingMimeType||"video/mp4";
+if(!recordedChunks.length){
+setStatus("KEIN VIDEO ERSTELLT");
+return;
+}
+const type=mediaRecorder.mimeType || recordingMimeType || "video/mp4";
 recordedBlob=new Blob(recordedChunks,{type});
-const extension=type.includes("webm")?"webm":"mp4";
+const extension=type.includes("webm") ? "webm" : "mp4";
 recordedFileName="DM_Motion_Telemetry_"+new Date().toISOString().replace(/[:.]/g,"-")+"."+extension;
-saveVideoButton.disabled=false;saveVideoButton.style.display="block";
+saveVideoButton.disabled=false;
+saveVideoButton.style.display="block";
 setStatus("VIDEO BEREIT ■ TELEMETRIE ENTHALTEN");
 };
-mediaRecorder.start(1000);return true;
-}catch(error){console.log("Recorder start:",error);stopRecordingCanvas();mediaRecorder=null;return false}
+mediaRecorder.start(1000);
+return true;
+}catch(error){
+console.log("Recorder start:",error);
+stopRecordingCanvas();
+mediaRecorder=null;
+return false;
 }
-function returnToReady(){
-document.body.classList.remove("dm-recording");
-saveVideoButton.style.display="none";saveVideoButton.disabled=true;
-recordedBlob=null;recordedChunks=[];recordedFileName="";recordingMimeType="";
-running=false;
-startButton.textContent="START DRIVE";startButton.classList.remove("stop");recordBadge.style.display="none";
-resetValues();applyPreviewOrientation();setStatus("DM MOTION ■ READY");
 }
 async function saveRecordedVideo(){
 if(!recordedBlob)return;
-const file=new File([recordedBlob],recordedFileName,{type:recordedBlob.type||"video/mp4"});
+const file=new File([recordedBlob],recordedFileName,{
+type:recordedBlob.type || "video/mp4"
+});
 try{
-if(navigator.share&&(!navigator.canShare||navigator.canShare({files:[file]}))){
-await navigator.share({files:[file],title:"DM Motion Video"});
-returnToReady();return;
+if(navigator.share && (!navigator.canShare || navigator.canShare({files:[file]}))){
+await navigator.share({
+files:[file],
+title:"DM Motion Video"
+});
+saveVideoButton.style.display="none";
+saveVideoButton.disabled=true;
+setStatus("VIDEO GESPEICHERT / GETEILT");
+return;
 }
 }catch(error){
-if(error&&error.name==="AbortError"){setStatus("SPEICHERN ABGEBROCHEN");return}
+if(error && error.name==="AbortError"){
+setStatus("SPEICHERN ABGEBROCHEN");
+return;
+}
 console.log("Share:",error);
 }
-const url=URL.createObjectURL(recordedBlob),a=document.createElement("a");
-a.href=url;a.download=recordedFileName;a.style.display="none";document.body.appendChild(a);a.click();a.remove();
-setTimeout(()=>URL.revokeObjectURL(url),10000);
-returnToReady();
+const url=URL.createObjectURL(recordedBlob);
+const a=document.createElement("a");
+a.href=url;
+a.download=recordedFileName;
+a.style.display="none";
+document.body.appendChild(a);
+a.click();
+a.remove();
+setTimeout(()=>{
+URL.revokeObjectURL(url);
+},10000);
+saveVideoButton.style.display="none";
+saveVideoButton.disabled=true;
+setStatus("VIDEO GESPEICHERT");
 }
 async function startCamera(){
-if(previewStream){camera.srcObject=previewStream;placeholder.style.display="none";applyPreviewOrientation();return true}
+if(previewStream){
+camera.srcObject=previewStream;
+placeholder.style.display="none";
+applyPreviewOrientation();
+return true;
+}
 try{
-const stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:{exact:"environment"}},audio:true});
-previewStream=stream;camera.srcObject=stream;camera.muted=true;camera.playsInline=true;placeholder.style.display="none";await camera.play().catch(()=>
-{});
-if(camera.readyState<2)await new Promise(resolve=>{const done=()=>{camera.removeEventListener("loadeddata",done);resolve()};camera.addEventListener("l
-oadeddata",done,{once:true});setTimeout(resolve,1200)});
-applyPreviewOrientation();return true;
+const stream=await navigator.mediaDevices.getUserMedia({
+video:{facingMode:{exact:"environment"}},
+audio:true
+});
+previewStream=stream;
+camera.srcObject=stream;
+camera.muted=true;
+camera.playsInline=true;
+placeholder.style.display="none";
+await camera.play().catch(()=>{});
+if(camera.readyState<2){
+await new Promise(resolve=>{
+const done=()=>{camera.removeEventListener("loadeddata",done);resolve()};
+camera.addEventListener("loadeddata",done,{once:true});
+setTimeout(resolve,1200);
+});
+}
+applyPreviewOrientation();
+return true;
 }catch(error){
 console.log("Camera:",error);
 try{
 const stream=await navigator.mediaDevices.getUserMedia({video:true,audio:true});
-previewStream=stream;camera.srcObject=stream;camera.muted=true;camera.playsInline=true;placeholder.style.display="none";await camera.play().catch(()=>
-{});applyPreviewOrientation();return true;
-}catch(fallbackError){console.log("Camera fallback:",fallbackError);setStatus("KAMERA NICHT FREIGEGEBEN");return false}
+previewStream=stream;
+camera.srcObject=stream;
+camera.muted=true;
+camera.playsInline=true;
+placeholder.style.display="none";
+await camera.play().catch(()=>{});
+applyPreviewOrientation();
+return true;
+}catch(fallbackError){
+console.log("Camera fallback:",fallbackError);
+setStatus("KAMERA NICHT FREIGEGEBEN");
+return false;
+}
 }
 }
 async function stopPreviewCamera(){
-if(previewStream){previewStream.getTracks().forEach(track=>track.stop());previewStream=null}
-if(camera.srcObject)camera.srcObject=null;placeholder.style.display="flex";
+if(previewStream){
+previewStream.getTracks().forEach(track=>track.stop());
+previewStream=null;
+}
+if(camera.srcObject){
+camera.srcObject=null;
+}
+placeholder.style.display="flex";
 }
 function startGPS(){
-if(!navigator.geolocation){gpsDisplay.textContent="NICHT VERFÜGBAR";return}
-gpsWatch=navigator.geolocation.watchPosition(position=>{
-const speed=position.coords.speed;if(speed!==null&&!isNaN(speed))speedDisplay.textContent=(speed*3.6).toFixed(0);
-gpsDisplay.textContent="AKTIV";updateRecordingPreview();
-},()=>{gpsDisplay.textContent="KEIN GPS"},{enableHighAccuracy:true,maximumAge:1000,timeout:10000});
+if(!navigator.geolocation){
+gpsDisplay.textContent="NICHT VERFÜGBAR";
+return;
+}
+gpsWatch=navigator.geolocation.watchPosition(
+position=>{
+const speed=position.coords.speed;
+if(speed!==null && !isNaN(speed)){
+speedDisplay.textContent=(speed*3.6).toFixed(0);
+}
+gpsDisplay.textContent="AKTIV";
+},
+()=>{gpsDisplay.textContent="KEIN GPS"},
+{enableHighAccuracy:true,maximumAge:1000,timeout:10000}
+);
 }
 function startTimer(){
-startTime=Date.now();timer=setInterval(()=>{
-const elapsed=Math.floor((Date.now()-startTime)/1000),minutes=Math.floor(elapsed/60),seconds=elapsed%60;
+startTime=Date.now();
+timer=setInterval(()=>{
+const elapsed=Math.floor((Date.now()-startTime)/1000);
+const minutes=Math.floor(elapsed/60);
+const seconds=elapsed%60;
 timeDisplay.textContent=String(minutes).padStart(2,"0")+":"+String(seconds).padStart(2,"0");
-updateRecordingPreview();
 },250);
 }
 function stopRace(){
-running=false;startButton.textContent="START DRIVE";startButton.classList.remove("stop");recordBadge.style.display="none";
+running=false;
+startButton.textContent="START DRIVE";
+startButton.classList.remove("stop");
+recordBadge.style.display="none";
 if(timer){clearInterval(timer);timer=null}
-if(gpsWatch!==null){navigator.geolocation.clearWatch(gpsWatch);gpsWatch=null}
-if(mediaRecorder&&mediaRecorder.state!=="inactive"){mediaRecorder.stop();setStatus("VIDEO WIRD VERARBEITET...")}
-else setStatus("KAMERA ■ BEREIT");
+if(gpsWatch!==null){
+navigator.geolocation.clearWatch(gpsWatch);
+gpsWatch=null;
+}
+if(mediaRecorder && mediaRecorder.state!=="inactive"){
+mediaRecorder.stop();
+}
+resetValues();
 applyPreviewOrientation();
+if(!recordedBlob)setStatus("VIDEO WIRD VERARBEITET...");
+else setStatus("KAMERA ■ BEREIT");
 }
 startButton.addEventListener("click",async()=>{
-if(running){stopRace();return}
-saveVideoButton.style.display="none";saveVideoButton.disabled=true;recordedBlob=null;recordedChunks=[];recordedFileName="";recordingMimeType="";
-running=true;recordingPortrait=window.innerHeight>window.innerWidth;await lockScreenOrientation();
-document.body.classList.add("dm-recording");
-startButton.textContent="STOP DRIVE";startButton.classList.add("stop");recordBadge.style.display="flex";resetValues();setStatus("STARTING...");
+if(running){
+stopRace();
+return;
+}
+// Starting a new drive means the previous unsaved video is no longer the active save action.
+saveVideoButton.style.display="none";
+saveVideoButton.disabled=true;
+recordedBlob=null;
+recordedChunks=[];
+recordedFileName="";
+recordingMimeType="";
+running=true;
+recordingPortrait=window.innerHeight > window.innerWidth;
+await lockScreenOrientation();
+startButton.textContent="STOP DRIVE";
+startButton.classList.add("stop");
+recordBadge.style.display="flex";
+resetValues();
+setStatus("STARTING...");
 await startMotion();
 const cameraOK=await startCamera();
-if(!cameraOK){running=false;document.body.classList.remove("dm-recording");startButton.textContent="START DRIVE";startButton.classList.remove("stop");
-recordBadge.style.display="none";return}
-startGPS();startTimer();
+if(!cameraOK){
+running=false;
+startButton.textContent="START DRIVE";
+startButton.classList.remove("stop");
+recordBadge.style.display="none";
+return;
+}
+startGPS();
+startTimer();
 if(camera.srcObject){
 if(!(await startRecording(camera.srcObject))){
-running=false;document.body.classList.remove("dm-recording");startButton.textContent="START DRIVE";startButton.classList.remove("stop");recordBadge.st
-yle.display="none";if(timer){clearInterval(timer);timer=null}if(gpsWatch!==null){navigator.geolocation.clearWatch(gpsWatch);gpsWatch=null}
-setStatus("AUFNAHME NICHT VERFÜGBAR");return;
+running=false;
+startButton.textContent="START DRIVE";
+startButton.classList.remove("stop");
+recordBadge.style.display="none";
+if(timer){clearInterval(timer);timer=null}
+if(gpsWatch!==null){
+navigator.geolocation.clearWatch(gpsWatch);
+gpsWatch=null;
+}
+setStatus("AUFNAHME NICHT VERFÜGBAR");
+return;
 }
 setStatus("DM MOTION ■ RECORDING");
 }
 });
 saveVideoButton.addEventListener("click",saveRecordedVideo);
-document.getElementById("menuBtn").onclick=()=>document.getElementById("menu").classList.add("open");
-document.getElementById("closeMenu").onclick=()=>document.getElementById("menu").classList.remove("open");
-document.getElementById("menu").addEventListener("click",e=>{if(e.target===document.getElementById("menu"))document.getElementById("menu").classList.r
-emove("open")});
+document.getElementById("menuBtn").onclick=()=>{
+document.getElementById("menu").classList.add("open");
+};
+document.getElementById("closeMenu").onclick=()=>{
+document.getElementById("menu").classList.remove("open");
+};
+document.getElementById("menu").addEventListener("click",e=>{
+if(e.target===document.getElementById("menu")){
+document.getElementById("menu").classList.remove("open");
+}
+});
+const menuItems=[...document.querySelectorAll(".item")];
 const driveMenuItem=document.getElementById("driveMenuItem");
-if(driveMenuItem)driveMenuItem.addEventListener("click",async e=>{e.preventDefault();e.stopPropagation();driveModeOpen=true;document.getElementById("m
-enu").classList.remove("open");await startCamera();applyPreviewOrientation()});
+if(driveMenuItem){
+driveMenuItem.addEventListener("click",async(e)=>{
+e.preventDefault();
+e.stopPropagation();
+driveModeOpen=true;
+document.getElementById("menu").classList.remove("open");
+await startCamera();
+applyPreviewOrientation();
+});
+}
 const myDrivesMenuItem=document.getElementById("myDrivesMenuItem");
-if(myDrivesMenuItem)myDrivesMenuItem.addEventListener("click",e=>{e.preventDefault();e.stopPropagation();openDrives()});
-closeSettingsButton.addEventListener("click",closeSettings);closeDrivesButton.addEventListener("click",closeDrives);
-drivesPanel.addEventListener("click",e=>{if(e.target===drivesPanel)closeDrives()});
-settingsPanel.addEventListener("click",e=>{if(e.target===settingsPanel)closeSettings()});
-updateSettingsUI();prepareSaveButton();resetValues();resizePreviewCanvas();requestAnimationFrame(drawPreviewFrame);
-window.addEventListener("orientationchange",()=>setTimeout(()=>{resizePreviewCanvas();applyPreviewOrientation()},80));
-window.addEventListener("resize",()=>setTimeout(()=>{resizePreviewCanvas();applyPreviewOrientation()},80));
-document.addEventListener("visibilitychange",()=>{if(!document.hidden&&driveModeOpen)setTimeout(()=>{if(previewStream&&camera.srcObject!==previewStrea
-m)camera.srcObject=previewStream;applyPreviewOrientation()},120)});
-setTimeout(async()=>{await startCamera();applyPreviewOrientation()},120);
+if(myDrivesMenuItem){
+myDrivesMenuItem.addEventListener("click",(e)=>{
+e.preventDefault();
+e.stopPropagation();
+openDrives();
+});
+}
+closeSettingsButton.addEventListener("click",closeSettings);
+closeDrivesButton.addEventListener("click",closeDrives);
+drivesPanel.addEventListener("click",e=>{if(e.target===drivesPanel)closeDrives();});
+settingsPanel.addEventListener("click",e=>{
+if(e.target===settingsPanel)closeSettings();
+});
+updateSettingsUI();
+prepareSaveButton();
+resetValues();
+resizePreviewCanvas();
+requestAnimationFrame(drawPreviewFrame);
+window.addEventListener("orientationchange",()=>{
+setTimeout(()=>{resizePreviewCanvas();applyPreviewOrientation();},80);
+});
+window.addEventListener("resize",()=>{
+setTimeout(()=>{resizePreviewCanvas();applyPreviewOrientation();},80);
+});
+document.addEventListener("visibilitychange",()=>{
+if(!document.hidden && driveModeOpen){
+setTimeout(()=>{
+if(previewStream && camera.srcObject!==previewStream)camera.srcObject=previewStream;
+applyPreviewOrientation();
+},120);
+}
+});
+setTimeout(async()=>{
+await startCamera();
+applyPreviewOrientation();
+},120);
+// Use the actual viewport dimensions so iPhone Safari landscape is detected
+// even when its CSS orientation media query does not update immediately.
 (function syncDMOrientation(){
-const sync=()=>{
-const angle=Number((screen.orientation&&typeof screen.orientation.angle==="number")?screen.orientation.angle:(typeof window.orientation==="number"?win
-dow.orientation:0));
-const landscapeByAngle=Math.abs(angle)===90||Math.abs(angle)===270,landscapeByViewport=window.innerWidth>window.innerHeight;
-document.body.classList.toggle("dm-landscape",landscapeByAngle||landscapeByViewport);
-};sync();window.addEventListener("resize",sync,{passive:true});window.addEventListener("orientationchange",()=>setTimeout(sync,50),{passive:true});
-if(screen.orientation&&screen.orientation.addEventListener)screen.orientation.addEventListener("change",sync,{passive:true});
+const sync = () => {
+const angle = Number(
+(screen.orientation && typeof screen.orientation.angle === "number")
+? screen.orientation.angle
+: (typeof window.orientation === "number" ? window.orientation : 0)
+);
+const landscapeByAngle = Math.abs(angle) === 90 || Math.abs(angle) === 270;
+const landscapeByViewport = window.innerWidth > window.innerHeight;
+document.body.classList.toggle("dm-landscape", landscapeByAngle || landscapeByViewport);
+};
+sync();
+window.addEventListener("resize", sync, {passive:true});
+window.addEventListener("orientationchange", () => setTimeout(sync, 50), {passive:true});
+if (screen.orientation && screen.orientation.addEventListener) {
+screen.orientation.addEventListener("change", sync, {passive:true});
+}
 })();
 </script>
 </body>
